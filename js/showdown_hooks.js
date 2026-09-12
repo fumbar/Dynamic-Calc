@@ -1151,6 +1151,9 @@ analyze = false
 limitHits = false
 FIELD_EFFECTS = {}
 
+// True when served from a local dev server; used to keep local runs self-contained.
+IS_LOCAL = ['localhost', '127.0.0.1', '::1', ''].includes(location.hostname)
+
 
 if (params.get('data') == 'bd7fc78f8fa2500dfcca') {
     location.href = 'https://hzla.github.io/Dynamic-Calc/?data=26138cc1d500b0cf7334&gen=7&switchIn=4&types=6'
@@ -1314,6 +1317,9 @@ $(document).ready(function() {
    TITLE = SOURCES[params.get('data')] || "NONE"
    
    if (backupFiles[TITLE]) {
+        // Skip the hosted-decomp redirects when running locally so the bundled
+        // ./backups/ data loads instead of navigating off the local server.
+        if (!IS_LOCAL) {
         if (TITLE == "Vintage White Plus") {
             location.href = "https://hzla.github.io/Dynamic-Calc-Decomps/?data=vwplus"
         }
@@ -1348,6 +1354,7 @@ $(document).ready(function() {
 
         if (TITLE == "Emerald Kaizo") {
             location.href = "https://hzla.github.io/Dynamic-Calc-Decomps/?data=ek"
+        }
         }
 
 
