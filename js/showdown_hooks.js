@@ -787,7 +787,13 @@ function removeEvs(sets) {
 }
 
 function loadDataSource(data) {
-    
+
+    // Titles that ask for it get their own copies of the tables this function
+    // overrides in place, so the stock dex and stock move data are left intact.
+    if (data["isolate_tables"]) {
+        isolateWorkingTables()
+    }
+
     if (evsOn == '0') {
         removeEvs(data["formatted_sets"])
     }
@@ -829,6 +835,11 @@ function loadDataSource(data) {
         if (data["move_replacements"]) {
             moveChanges[TITLE] = data["move_replacements"]
         }
+    }
+
+    // Titles whose sets come in tiers expose the selector; the rest never see it.
+    if (data["tier"]) {
+        initTierControl(data["tier"])
     }
 
     if (TITLE.includes("White") || TITLE.includes("Black") ) {
@@ -1065,6 +1076,19 @@ function loadDataSource(data) {
             "spd": jsonPok["bs"]["sd"],
             "spe": jsonPok["bs"]["sp"],
         }
+
+        // The engine reads weight and Eviolite eligibility off SPECIES_BY_ID, not off
+        // pokedex, so a title that changes them has to reach both. hasOwnProperty
+        // rather than truthiness: nfe false and weightkg 0 are real values.
+        if (jsonPok.hasOwnProperty("weightkg")) {
+            pokedex[pok]["weightkg"] = jsonPok["weightkg"]
+            SPECIES_BY_ID[gen][pok_id].weightkg = jsonPok["weightkg"]
+        }
+
+        if (jsonPok.hasOwnProperty("nfe")) {
+            pokedex[pok]["nfe"] = jsonPok["nfe"]
+            SPECIES_BY_ID[gen][pok_id].nfe = jsonPok["nfe"]
+        }
     }
 
     
@@ -1226,7 +1250,8 @@ $(document).ready(function() {
     "0a37ed78da4e6078ed52": "Garbage Gold Deluxe",
     "rosegold": "Rose Gold",
     "vwplus": "Vintage White Plus",
-    "6e2c17e2d1e82f56b448": "Navy Saphire"
+    "6e2c17e2d1e82f56b448": "Navy Saphire",
+    "unbound": "Unbound 2.1.1"
     }
 
     MASTERSHEETS = {

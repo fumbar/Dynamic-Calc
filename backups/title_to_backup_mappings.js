@@ -30,7 +30,8 @@ backupFiles = {
 	"Sterling Silver 1.17": "ster117",
 	"Rose Gold": "rg",
 	"Vintage White Plus": "vwplus",
-	"Navy Saphire": "navy"
+	"Navy Saphire": "navy",
+	"Unbound 2.1.1": "unbound"
 }
 
 

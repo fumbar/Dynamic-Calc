@@ -58,7 +58,8 @@
        "ced457ba9aa55731616c": "Radical Red 4.1 Normal",
        "0d8b65ba6796bf2b3d4c": "White 2 Kaizo",
        "vwplus": "Vintage White Plus",
-       "6e2c17e2d1e82f56b448": "Navy Saphire"
+       "6e2c17e2d1e82f56b448": "Navy Saphire",
+       "unbound": "Unbound 2.1.1"
    }
         // https://hzla.github.io/Dynamic-Calc-Decomps/?data=e91164d90d06a009e6cc&dmgGen=8&gen=8&types=6&noSwitch=1
         if (SOURCES[params.get('data')]) {
@@ -166,6 +167,11 @@
 
         </span>
         <div id="rom-title"></div>
+        <select id="tier-select" class="gone" title="Difficulty tier">
+            <option value="difficult">Difficult</option>
+            <option value="expert">Expert</option>
+            <option value="insane">Insane</option>
+        </select>
         <span class="genSelection" aria-labelledby="selectGenInstruction" role="radiogroup" title="Select the generation.">
             <span class="visually-hidden" id="selectGenInstruction">Select the generation.</span>
             <input class="gen visually-hidden" type="radio" name="gen" value="1" id="gen1" /><label class="btn btn-small btn-left" for="gen1">RBY</label>
@@ -1881,6 +1887,7 @@
     
 
      <script type="text/javascript" src="./backups/title_to_backup_mappings.js?5"></script>
+    <script type="text/javascript" src="./js/unbound_adapter.js?100000"></script>
 
     <script type="text/javascript" src="./js/console_watcher.js?8fa0c7fc"></script>
     <script type="text/javascript" src="./js/expert_ai.js?8fa0c7fc"></script>

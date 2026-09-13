@@ -1,0 +1,170 @@
+// Adapter between the Unbound donor data in backups/unbound.js and this
+// application's loadDataSource().
+//
+// It does three things: pick the difficulty tier, hand loadDataSource a fresh
+// working payload that shares no object with the donor, and apply the small set of
+// donor-record corrections that actual trainer references justify.
+
+var UNBOUND_TITLE = "Unbound 2.1.1";
+var UNBOUND_TIERS = ["difficult", "expert", "insane"];
+var UNBOUND_DEFAULT_TIER = "expert";
+
+// Filled in by buildUnboundDataSource; surfaced in the console and used by the
+// handoff notes so excluded records are never silently dropped.
+var UNBOUND_NOTES = [];
+
+// Move names in the donor sets that no move table resolves. Each is a spelling or
+// casing variant of a move both tables do have; checked against the referencing set.
+var UNBOUND_MOVE_ALIASES = {
+    "ThunderPunch": "Thunder Punch",
+    "Heatt Wave": "Heat Wave",
+    "Freeze Dry": "Freeze-Dry",
+    "DIscharge": "Discharge",
+    // The donor's own question mark. Kept as Fire because that is what it says;
+    // recorded as a disclosed assumption rather than a correction.
+    "Hidden Power (Fire?)": "Hidden Power Fire"
+};
+
+// Unresolved move names. Blanked to the donor's own empty-slot convention rather
+// than guessed at, so the set stays usable and the gap is visible.
+//   Bad Tantrum: Pupitar, "Lvl 47 Rival 4 |Player Chose Gible|", all tiers.
+var UNBOUND_UNRESOLVED_MOVES = ["Bad Tantrum"];
+
+// Species keys that are not species. The donor's trainer column uses a pipe-delimited
+// label -- "Science Society Scientist |Supply and Demand|" -- and in these records the
+// label landed in the species position instead. The real species is not recoverable
+// from the data, so the sets are dropped rather than calculated against a guess.
+var UNBOUND_QUARANTINED_SPECIES = ["Supply and Demand", "Rogue Electivire", "[2nd"];
+
+function deepCopy(value) {
+    if (typeof structuredClone === "function") return structuredClone(value);
+    return JSON.parse(JSON.stringify(value));
+}
+
+// Resolves ?m=. Anything absent or unrecognised falls back to the default tier.
+function unboundTier(search) {
+    var q = new URLSearchParams(typeof search === "string" ? search : window.location.search);
+    var requested = (q.get("m") || "").toLowerCase();
+    if (UNBOUND_TIERS.indexOf(requested) !== -1) return requested;
+    return UNBOUND_DEFAULT_TIER;
+}
+
+function applyUnboundSetCorrections(sets) {
+    var dropped = [];
+    var aliased = {};
+    var blanked = {};
+
+    for (var i = 0; i < UNBOUND_QUARANTINED_SPECIES.length; i++) {
+        var bad = UNBOUND_QUARANTINED_SPECIES[i];
+        if (sets[bad]) {
+            dropped.push(bad + ": " + Object.keys(sets[bad]).join(", "));
+            delete sets[bad];
+        }
+    }
+
+    for (var species in sets) {
+        for (var setName in sets[species]) {
+            var moveList = sets[species][setName].moves;
+            if (!moveList) continue;
+            for (var m = 0; m < moveList.length; m++) {
+                var move = moveList[m];
+                if (UNBOUND_MOVE_ALIASES[move]) {
+                    aliased[move] = UNBOUND_MOVE_ALIASES[move];
+                    moveList[m] = UNBOUND_MOVE_ALIASES[move];
+                } else if (UNBOUND_UNRESOLVED_MOVES.indexOf(move) !== -1) {
+                    blanked[move] = species + " / " + setName;
+                    moveList[m] = "";
+                }
+            }
+        }
+    }
+
+    for (var d = 0; d < dropped.length; d++) {
+        UNBOUND_NOTES.push("excluded set, species field is a trainer label -- " + dropped[d]);
+    }
+    for (var from in aliased) {
+        UNBOUND_NOTES.push("move name corrected: '" + from + "' -> '" + aliased[from] + "'");
+    }
+    for (var unresolved in blanked) {
+        UNBOUND_NOTES.push("move left blank, no match found: '" + unresolved + "' on " + blanked[unresolved]);
+    }
+    return sets;
+}
+
+// Builds the payload loadDataSource() consumes. Every object in it is a fresh copy,
+// so the loader's in-place overrides cannot reach back into the donor tables.
+function buildUnboundDataSource(donor, tier) {
+    UNBOUND_NOTES = [];
+    tier = tier || unboundTier();
+
+    var collection = donor.formatted_sets[tier];
+    if (!collection) {
+        UNBOUND_NOTES.push("tier '" + tier + "' not in donor data, using " + UNBOUND_DEFAULT_TIER);
+        tier = UNBOUND_DEFAULT_TIER;
+        collection = donor.formatted_sets[tier];
+    }
+
+    var payload = {
+        formatted_sets: applyUnboundSetCorrections(deepCopy(collection)),
+        poks: deepCopy(donor.pokedex),
+        moves: deepCopy(donor.unbound_moves),
+        title: UNBOUND_TITLE,
+        // Tells loadDataSource to override copies of the shared tables rather than
+        // the stock objects themselves. See isolateWorkingTables().
+        isolate_tables: true
+    };
+    payload.tier = tier;
+
+    if (UNBOUND_NOTES.length) {
+        console.log("Unbound data notes (" + tier + "):\n  " + UNBOUND_NOTES.join("\n  "));
+    }
+    return payload;
+}
+
+// Replaces the four tables loadDataSource() mutates with independent copies, so the
+// stock dex and stock move data survive a title load intact. Both consumers are
+// covered: the UI reads `pokedex` and `moves`, the engine reads SPECIES_BY_ID[gen]
+// and MOVES_BY_ID[gen] -- reassigning those array slots is what the engine's
+// Species.get() and Moves.get() look at on every call.
+function isolateWorkingTables() {
+    if (typeof pokedex !== "undefined" && pokedex) pokedex = deepCopy(pokedex);
+    if (typeof moves !== "undefined" && moves) moves = deepCopy(moves);
+    if (typeof SPECIES_BY_ID !== "undefined" && SPECIES_BY_ID[gen]) {
+        SPECIES_BY_ID[gen] = deepCopy(SPECIES_BY_ID[gen]);
+    }
+    if (typeof MOVES_BY_ID !== "undefined" && MOVES_BY_ID[g]) {
+        MOVES_BY_ID[g] = deepCopy(MOVES_BY_ID[g]);
+    }
+}
+
+// Shows the tier selector and makes it navigate. Changing tier rewrites ?m= and
+// reloads, which keeps a chosen tier in the link and matches how this application
+// already switches titles. Any saved trainer selection that the new tier does not
+// contain is cleared, so the page does not restore a set that is no longer there.
+function initTierControl(tier) {
+    var select = $('#tier-select');
+    if (!select.length) return;
+    select.val(tier).removeClass('gone');
+    select.off('change.tier').on('change.tier', function () {
+        var chosen = $(this).val();
+        if (chosen === tier) return;
+        if (!setExistsInTier(chosen, localStorage["right"])) {
+            delete localStorage["right"];
+            delete localStorage["left"];
+        }
+        var q = new URLSearchParams(window.location.search);
+        q.set('m', chosen);
+        window.location.search = q.toString();
+    });
+}
+
+// True when the remembered trainer set name is also present in the target tier.
+function setExistsInTier(tier, setName) {
+    if (!setName) return false;
+    var collection = UNBOUND_DONOR && UNBOUND_DONOR.formatted_sets[tier];
+    if (!collection) return false;
+    for (var species in collection) {
+        if (collection[species][setName]) return true;
+    }
+    return false;
+}
