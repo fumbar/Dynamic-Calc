@@ -27,7 +27,7 @@ Expert. The tier selector next to the title does the same thing by rewriting the
 ```
 node check/run.js         # recorded damage fixtures, effects off
 node check/mechanics.js   # each ported effect, against donor B on identical inputs
-node check/ui.js          # the real page in headless Chrome (42 checks)
+node check/ui.js          # the real page in headless Chrome (45 checks)
 ```
 
 No `npm install`. `check/ui.js` drives Chrome or Edge over the DevTools protocol and fails on
@@ -52,10 +52,12 @@ number: Liepard stays 98 base Attack in the stock table while the Unbound table 
 and carried on donor C's field flag names. Controls appear beside the weather bar for this
 title only. Inverse battle was already implemented here and is reused unchanged.
 
-**Text import.** The existing parser handles a Showdown-format box, the sets reach the box and
-the selectable list, and an imported Liepard calculates off Unbound's base stats.
+**Text import.** Checked against your real Unbound Cloud box export
+(`docs/example_box.txt`, 18 Pokemon). All 18 import, all are selectable, and an imported
+Trevenant calculates off Unbound's base Attack of 110 rather than the stock 120. Two importer
+bugs that export exposed are fixed below.
 
-## Two bugs found and fixed on the way
+## Four bugs found and fixed on the way
 
 1. **No Unbound base power was being applied at all.** The donor states base power as `bp`;
    `loadDataSource()` reads `basePower`. Every Unbound move silently kept its stock value —
@@ -66,6 +68,19 @@ the selectable list, and an imported Liepard calculates off Unbound's base stats
    abilities to both the UI table and `SPECIES_BY_ID`, but weight and Eviolite eligibility
    only to the UI table — and the engine reads them from `SPECIES_BY_ID`. Dusclops with
    Eviolite is in the Expert battle used as a check, so this was live.
+
+Your box export then turned up two more, both in the existing importer and both affecting
+every title, not just Unbound:
+
+3. **A nickname that is also a species name imported a second, wrong Pokemon.** The parser
+   scanned the whole header row and imported every token that matched a species. Your
+   `Zygarde (Zygarde-10%)` produced two box entries: the correct Zygarde-10%, and a base
+   Zygarde built from the same set — different base stats, silently selectable. The row now
+   stops at the first species, and a nicknamed row is read from the parenthesised name.
+4. **A species held twice in the box lost one copy.** Every imported set was written to the
+   hardcoded slot `"My Box"`, so your second Pyroar overwrote the first. Duplicates now take
+   `"My Box 2"` and so on, numbered per import so re-importing the same box does not
+   accumulate.
 
 ## Excluded records — please read
 
@@ -130,8 +145,9 @@ repeats. Everything else matches.
 - A's and donor B's parallel-speed helpers differ on paralysis in gen 7
   (`gen.num < 7` here, `gen.num != 7` there). Inherited, not introduced by this port.
 - Direct Unbound save import is still not possible; no reader for its layout exists in either
-  fork. The import fixture is representative Showdown-format text, not a verified Unbound
-  Cloud export — if you have a real one, running it through `addSets()` is a one-line check.
+  fork. Text import is the route, and it is now checked against a real Cloud export.
+- `Zygarde-10%` has a `%` in its name, so its sprite URL is not valid percent-encoding and the
+  sprite does not load. Cosmetic, pre-existing, and not specific to Unbound.
 - The box is still shared across titles, as agreed.
 
 ## Next

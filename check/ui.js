@@ -178,49 +178,50 @@ async function main() {
       ' new calc.Move(calc.Generations.get(8), "Surf").bp])'), '[95,95,95]');
 
     console.log('\n# text import');
-    // Representative Showdown-format text, not a verified Unbound Cloud export: no
-    // real export was available. It exercises the same parser a Cloud box export
-    // goes through, using a species whose Unbound base stats differ from stock.
-    const TEAM = [
-      'Liepard @ Life Orb',
-      'Ability: Prankster',
-      'Level: 50',
-      'EVs: 252 Atk / 252 Spe',
-      'Jolly Nature',
-      '- Knock Off',
-      '- Play Rough',
-      '- U-turn',
-      '- Sucker Punch',
-      '',
-      'Krookodile @ Choice Scarf',
-      'Ability: Intimidate',
-      'Level: 50',
-      'EVs: 252 Atk / 252 Spe',
-      'Adamant Nature',
-      '- Earthquake',
-      '- Crunch',
-      '- Stone Edge',
-      '- Close Combat',
-    ].join(String.fromCharCode(10));
+    // A real Unbound Cloud box export from the owner's playthrough
+    // (docs/example_box.txt): 18 Pokemon, 17 species, nicknames, and one species
+    // that appears twice.
+    const TEAM = require('fs').readFileSync(
+      require('path').join(__dirname, '..', 'docs', 'example_box.txt'), 'utf8');
+    const boxDump = '(function () {' +
+      '  var d = JSON.parse(localStorage.customsets || "{}"), o = [];' +
+      '  for (var k in d) for (var s in d[k]) o.push(k + "|" + s + "|" + d[k][s].level);' +
+      '  return JSON.stringify(o.sort());' +
+      '})()';
 
     await open(UNBOUND);
     await session.eval('localStorage.removeItem("customsets")');
     await open(UNBOUND);
-    await session.eval('addSets(' + JSON.stringify(TEAM) + ', "Cloud box")');
-    check('imported sets are stored', await session.eval(
-      'JSON.stringify(Object.keys(JSON.parse(localStorage.customsets)).sort())'),
-      '["Krookodile","Liepard"]');
-    check('imported sets are selectable', await session.eval(
-      'JSON.stringify([!!setdex["Liepard"], !!setdex["Krookodile"]])'), '[true,true]');
+    await session.eval('addSets(' + JSON.stringify(TEAM) + ', "Box")');
+    const imported = JSON.parse(await session.eval(boxDump));
+    check('every Pokemon in the box is imported', imported.length, 18);
+    check('imported species are all selectable', await session.eval(
+      '(function () {' +
+      '  var d = JSON.parse(localStorage.customsets || "{}");' +
+      '  return JSON.stringify(Object.keys(d).filter(function (k) { return !setdex[k]; }));' +
+      '})()'), '[]');
+    // A nickname that is also a species name used to import a second, wrong set.
+    check('a nicknamed form imports once, as the form', await session.eval(
+      '(function () {' +
+      '  var d = JSON.parse(localStorage.customsets || "{}");' +
+      '  return JSON.stringify([!!d["Zygarde-10%"], !!d["Zygarde"]]);' +
+      '})()'), '[true,false]');
+    // Two Pyroar used to collapse into one, the second overwriting the first.
+    check('a species held twice keeps both entries',
+      imported.filter(r => r.indexOf('Pyroar|') === 0).sort(),
+      ['Pyroar|My Box 2|40', 'Pyroar|My Box|36']);
+    await session.eval('addSets(' + JSON.stringify(TEAM) + ', "Box")');
+    check('an identical re-import does not accumulate entries',
+      JSON.parse(await session.eval(boxDump)).length, 18);
     check('an imported Pokemon calculates off Unbound base stats', await session.eval(
       '(function () {' +
       '  var gen = calc.Generations.get(8);' +
-      '  var liepard = new calc.Pokemon(gen, "Liepard", { level: 50 });' +
-      '  return JSON.stringify([liepard.species.baseStats.atk, liepard.rawStats.atk]);' +
+      '  var trev = new calc.Pokemon(gen, "Trevenant", { level: 50 });' +
+      '  return JSON.stringify([trev.species.baseStats.atk, trev.rawStats.atk]);' +
       '})()'),
-      // Unbound gives Liepard 88 base Attack, not the stock 98; at level 50 with no
-      // EVs that is 108 rather than 118.
-      '[88,108]');
+      // Unbound gives Trevenant 110 base Attack, not the stock 120; at level 50 with
+      // no EVs that is 130 rather than 140.
+      '[110,130]');
 
     console.log('\n# another title still loads');
     await session.open(base + RENPLAT, LOADED + ' && TITLE === "Renegade Platinum"');

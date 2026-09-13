@@ -804,7 +804,23 @@ function addToDex(poke) {
 		customsets[poke.name] = {};
 	}
 
-	customsets[poke.name]["My Box"] = dexObject;
+	var slot = "My Box";
+	if (typeof boxSlotsUsed !== "undefined" && boxSlotsUsed) {
+		var seen = boxSlotsUsed[poke.name] = (boxSlotsUsed[poke.name] || 0) + 1;
+		if (seen > 1) {
+			slot = "My Box " + seen;
+		} else {
+			// First of this species in this import: drop numbered slots left by an
+			// earlier, larger box so removed Pokemon do not linger.
+			for (var stale in customsets[poke.name]) {
+				if (/^My Box \d+$/.test(stale)) {
+					delete customsets[poke.name][stale];
+				}
+			}
+		}
+	}
+
+	customsets[poke.name][slot] = dexObject;
 	
 	
 
@@ -869,6 +885,10 @@ function addSets(pokes, name) {
 		// return
 	}	
 
+	// Slot names are per import, so a box holding the same species twice keeps both
+	// instead of the second overwriting the first.
+	boxSlotsUsed = {};
+
 	var rows = pokes.split("\n");
 	var currentRow;
 	var currentPoke;
@@ -892,8 +912,17 @@ function addSets(pokes, name) {
 		}
 		
 		
+		// When a row is nicknamed the species is the parenthesised name, so the
+		// leading nickname is skipped. Otherwise a nickname that is itself a species
+		// name wins the scan: "Zygarde (Zygarde-10%)" imported as base Zygarde.
+		var nicknamed = currentRow.length > 1 && currentRow[0].trim() &&
+			calc.SPECIES[8][checkExeptions(currentRow[1].trim())] !== undefined;
+
 		for (var j = 0; j < currentRow.length; j++) {
 			currentRow[j] = checkExeptions(currentRow[j].trim());
+			if (j === 0 && nicknamed) {
+				continue;
+			}
 			if (calc.SPECIES[8][currentRow[j].trim()] !== undefined) {
 				currentPoke = calc.SPECIES[8][currentRow[j].trim()];
 				currentPoke.name = currentRow[j].trim();
@@ -916,6 +945,10 @@ function addSets(pokes, name) {
 				currentPoke = getMoves(currentPoke, rows, i);
 				addToDex(currentPoke);
 				addedpokes++;
+				// One Pokemon per row. Without this the rest of the row is still
+				// scanned, and any later token that is also a species name imports a
+				// second, wrong set for the same entry.
+				break;
 			}
 		}
 	}

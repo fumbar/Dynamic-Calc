@@ -20,7 +20,15 @@ const CHROMES = [
 
 function serve() {
   const server = http.createServer((req, res) => {
-    const rel = decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '') || 'index.html';
+    let rel;
+    try {
+      rel = decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '') || 'index.html';
+    } catch (e) {
+      // A page can ask for a path that is not valid percent-encoding; answer 400
+      // rather than taking the check server down with it.
+      res.writeHead(400).end('bad request');
+      return;
+    }
     const file = path.join(ROOT, rel);
     if (!file.startsWith(ROOT) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
       res.writeHead(404).end('not found');
