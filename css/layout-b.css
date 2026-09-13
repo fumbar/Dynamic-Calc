@@ -261,16 +261,18 @@
 }
 
 /* ---- sprite rendering ----
- * The sprites are 40x30 pixel art shown at roughly 2x (85x64 in the box, 80x60
- * of content in the panel), and the browser's default smoothing turns that into
- * blur. css/frags.css already renders its own sprites pixelated; this does the
- * same for the ones on this page. Not geometry, but no colour either.
+ * Scoped to the `pokesprite` style only. That set is 40x30 pixel art shown at
+ * 2x, where smoothing reads as blur and pixelated is right. The other style is
+ * `newhd` at 300x300, which the same boxes DOWNSCALE -- pixelated there causes
+ * aliasing, so it must not apply. The chosen style is a class on the tile
+ * (boxSprites = ["newhd", "pokesprite"]), which is what scopes this.
+ *
+ * The panel sprite (.poke-sprite) is deliberately left smoothed: it takes its
+ * source from playerSprites/trainerSprites, carries no style class, and the
+ * owner prefers it soft at that size. Not geometry, but no colour either.
  */
-.poke-sprite,
-.poke-sprite-weather,
-.trainer-pok,
-.trainer-pok-item,
-.player-poks img {
+.trainer-pok.pokesprite,
+.pokesprite .trainer-pok {
     image-rendering: pixelated;
 }
 
