@@ -803,12 +803,13 @@ function calculateBPModsSMSS(gen, attacker, defender, move, field, desc, basePow
         }
     }
     if (!move.isMax && hasAteAbilityTypeChange) {
-        // 4915 is 1.2x. Both Unbound donors use 5325 (1.3x), but CFRU's OLD_ATE_BOOST,
-        // which is what produces 1.3x, ships commented out -- so 1.2x is what an
-        // unmodified build does, and donor agreement is not evidence Unbound changed
-        // it. Left at the default until a ROM observation settles it. See
-        // docs/HANDOFF.md.
-        bpMods.push(4915);
+        // 4915 is 1.2x, CFRU's default. Unbound compiles with OLD_ATE_BOOST, so its
+        // -ate abilities are 1.3x: read out of the ROM at 0x09cd620, where the branch
+        // taken when AbilityCanChangeTypeAndBoost returns true sets the multiplier to
+        // 13 for the shared (power * k) / 10 tail at 0x09cd6fc. Corroborated in the
+        // same switch by Technician and Mega Launcher at 15 and Iron Fist at 12,
+        // which are the values CFRU documents. A title sets ATE_BP_MOD to its own.
+        bpMods.push(typeof ATE_BP_MOD !== 'undefined' && ATE_BP_MOD ? ATE_BP_MOD : 4915);
     }
     if ((attacker.hasAbility('Reckless') && (move.recoil || move.hasCrashDamage)) ||
         (attacker.hasAbility('Liquid Voice') && move.flags.sound) ||

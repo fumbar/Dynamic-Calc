@@ -1,4 +1,4 @@
-# The data layer is checked against the ROM; the damage code is not
+# The data layer is checked against the ROM, and so is one damage constant
 
 [ADR 0002](0002-unbound-ground-truth-from-rom.md) makes the ROM the arbiter.
 [ADR 0003](0003-donor-matching-accepted-for-first-build.md) accepted donor matching as
@@ -34,24 +34,30 @@ what the stock tables did not.
 CFRU source (pinned at `b637a27`) confirmed the Portal Power port exactly — 0.75x on
 non-contact moves, behind a flag CFRU describes as Hoopa-Unbound's ability in Unbound.
 
-## Where its authority stops
+## Where its authority stops, and where it did not
 
-Base stats, types, move power, move type and move split are data, sitting in tables that can
-be read. **Damage-formula constants are compiled Thumb code and were not read.** Anything in
-that category remains unverified no matter how much of the data layer checks out.
+Base stats, types, move power, move type and move split are data, sitting in tables that
+can be read. Damage-formula constants are compiled Thumb code and are a different kind of
+work — but not an impossible one, and one of them was settled here.
 
-The live example is the `-ate` boost. Aerilate, Pixilate, Refrigerate and Galvanize apply
-1.3x in both donors and 1.2x here. CFRU has exactly this as a compile-time switch,
-`OLD_ATE_BOOST`, and ships it commented out — so 1.2x is what an unmodified build does, and
-1.3x requires Unbound to have opted in. Whether it did is not determinable from the tables.
+The live question was the `-ate` boost. Aerilate, Pixilate, Refrigerate and Galvanize apply
+1.3x in both donors and 1.2x in this fork's inherited code. CFRU has exactly this as a
+compile-time switch, `OLD_ATE_BOOST`, shipped commented out, so CFRU source could say what
+an unmodified build does but not what Unbound compiled.
 
-This fork keeps CFRU's default. Agreement between two donors is not evidence that Unbound
-changed a compile flag, and an earlier commit here moved to 1.3x on exactly that reasoning,
-which this decision reverses. The circumstantial evidence cuts both ways: Unbound clearly
-disabled `GEN_6_POWER_NERFS` (Surf is 95, Hydro Pump 120) but kept `GEN_7_POWER_NERFS`
-(Sucker Punch is 70) — and the 1.3x-to-1.2x change is a generation 7 change, which is the
-only reason to prefer the default rather than a coin flip.
+Disassembling settled it. The ability power switch at `0x09cd4e6` funnels every boosting
+case into one shared `(power * r3) / 10` tail, and the branch taken when the move is
+retyped sets `r3` to 13. **Unbound compiles with `OLD_ATE_BOOST`: the boost is 1.3x.** The
+same switch gives Technician and Mega Launcher 15 and Iron Fist 12, which are the values
+CFRU documents — three independent corroborations that the function and the register were
+read correctly. `check/rom-ate.md` records the full trail.
 
-Settling it needs one of: disassembling the ability modifier in the ROM, or a single battle
-observation with an `-ate` user against a known target. `check/agreement.js` reports these
-cases in their own row so the number never gets quietly absorbed into "agreement".
+This branch got that question wrong twice before getting it right: first changing to 1.3x
+because both donors said so, then reverting to 1.2x because CFRU ships the switch off and
+donor agreement is not evidence. The reasoning behind the revert was sound and the
+conclusion was wrong. Reading the ROM is what separated them, which is the whole point of
+ADR 0002.
+
+What remains unread is the rest of the damage code. Nothing here licenses assuming the
+formula matches elsewhere; it licenses disassembling the next constant when one is
+disputed, which is now a known and repeatable procedure rather than a hypothetical.

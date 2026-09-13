@@ -126,25 +126,33 @@ from another calculator.
 - CFRU source (pinned at `b637a27`) confirmed the Portal Power port exactly: 0.75x against
   non-contact moves, behind a flag CFRU documents as Hoopa-Unbound's ability in Unbound.
 
-**What the ROM did not settle.** Base stats and move data are tables that can be read.
-Damage-formula constants are compiled code and were not. The live example is the `-ate`
-boost — see below.
+- **The `-ate` boost is 1.3x**, read out of the compiled code rather than the data
+  tables. See below.
 
-### The -ate boost is still open
+**What the ROM did not settle.** Only the one damage constant above was disassembled. The
+rest of the damage formula is unread, and nothing here says it matches.
 
-Aerilate, Pixilate, Refrigerate and Galvanize apply **1.2x here and 1.3x in both donors**.
-An earlier commit in this branch moved to 1.3x to match them. CFRU source then showed that
-1.3x comes from a compile-time switch, `OLD_ATE_BOOST`, that ships commented out — so 1.2x
-is what an unmodified build does, and two donors agreeing is not evidence that Unbound
-opted in. That commit is reverted; this fork keeps CFRU's default.
+### The -ate boost: settled by disassembling the ROM
+
+Aerilate, Pixilate, Refrigerate and Galvanize apply 1.3x in both donors and 1.2x in this
+fork's inherited code. CFRU has this as a compile-time switch, `OLD_ATE_BOOST`, shipped
+commented out — so CFRU source could say what an unmodified build does, but not what
+Unbound compiled.
+
+Disassembling the ROM settled it. The ability power switch at `0x09cd4e6` funnels every
+boosting case into one shared `(power * r3) / 10` tail; the branch taken when the move is
+retyped sets `r3` to 13. **Unbound compiles with `OLD_ATE_BOOST`, so the boost is 1.3x**,
+and this fork now applies it. The same switch reads Technician and Mega Launcher at 15 and
+Iron Fist at 12 — exactly what CFRU documents — which is how the reading was checked.
+`check/rom-ate.md` has the full trail.
+
+Worth knowing how this went: the branch got it wrong twice first. It moved to 1.3x because
+both donors said so, then reverted to 1.2x because CFRU ships the switch off and donor
+agreement is not evidence. The revert's reasoning was sound and its conclusion was wrong.
+Only reading the ROM separated them.
 
 It affects Champion Jax's Salamence-Mega, Elite Four Arabella's Sylveon and a handful of
-others, by about 8%. `check/agreement.js` counts these in their own row so the number is
-never quietly absorbed into "agreement".
-
-**One battle would settle it**: an `-ate` user hitting a target whose stats you know, with
-the damage written down. If you ever have the emulator open, that is the single most
-valuable observation left.
+others by about 8%, so it was worth the effort.
 
 ## Excluded records — please read
 
@@ -184,11 +192,11 @@ this fork in the real page (so `loadDataSource` has applied the title's data) an
 its own tables. Each set both attacks and defends, and every Pokemon is built from explicit
 base stats, types and weight, so a data difference cannot be mistaken for an engine one.
 
-| tier | comparisons | agree | ROM-backed differences | -ate, unresolved | unexplained |
-|---|---|---|---|---|---|
-| Difficult | 2839 | 99.12% | 16 | 4 | 5 (4 are donor B crashing) |
-| Expert | 3040 | 99.34% | 11 | 7 | 2 |
-| Insane | 3313 | 99.46% | 12 | 6 | 0 |
+| tier | comparisons | agree | ROM-backed differences | unexplained |
+|---|---|---|---|---|
+| Difficult | 2839 | 99.26% | 16 | 5 (4 are donor B crashing) |
+| Expert | 3040 | 99.57% | 11 | 2 |
+| Insane | 3313 | 99.64% | 12 | 0 |
 
 Agreement is *lower* than it was before the ROM check, deliberately. Where the cartridge
 says both donors are wrong, this calculator follows the cartridge.

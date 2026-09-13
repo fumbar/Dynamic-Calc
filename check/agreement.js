@@ -196,9 +196,8 @@ function measureDonor() {
 // donors are wrong. Counted separately so the headline number stays meaningful.
 const ROM_BACKED_DIVERGENCE = ['Hydro Pump', 'Aura Sphere'];
 
-// Moves carried by an -ate ability. Both donors apply 1.3x; CFRU ships the 1.3x
-// switch (OLD_ATE_BOOST) commented out, so this fork keeps CFRU's 1.2x default.
-// Which one Unbound compiled is unresolved -- see docs/HANDOFF.md.
+// Was a divergence while the -ate multiplier was unresolved. The ROM settled it at
+// 1.3x, so these agree again; the list stays so the row reappears if it regresses.
 const ATE_ABILITIES = ['Aerilate', 'Pixilate', 'Refrigerate', 'Galvanize'];
 
 function compareDamage(ours, theirs, setAbility) {
@@ -259,7 +258,7 @@ console.log('   agree                : ' + dmg.agree + '  (' + pct(dmg.agree, dm
 console.log('   differ, ROM-backed   : ' + dmg.romBacked +
   '  (this fork follows the ROM where the donors are wrong)');
 console.log('   differ, -ate boost   : ' + dmg.ateBoost +
-  '  (CFRU default 1.2x vs the donors 1.3x, unresolved)');
+  '  (should be 0: the ROM settled this at 1.3x)');
 console.log('   disagree             : ' + dmg.mismatches.length);
   const threwHere = dmg.mismatches.filter(m => String(m.mine).indexOf('THREW') === 0).length;
   const threwDonor = dmg.mismatches.filter(m => String(m.donor).indexOf('THREW') === 0).length;

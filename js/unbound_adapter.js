@@ -219,6 +219,8 @@ function buildUnboundDataSource(donor, tier) {
         // Translate the donor's move flags to the names the engine reads: without
         // this, Iron Fist misses Wicked Blow and a custom move has no flags at all.
         apply_move_flags: true,
+        // 1.3x for the -ate abilities, read out of the ROM: see check/rom-ate.md.
+        ate_bp_mod: 5325,
         extra_abilities: extraAbilities
     };
     payload.tier = tier;

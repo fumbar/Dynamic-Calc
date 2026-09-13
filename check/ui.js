@@ -233,6 +233,23 @@ async function main() {
       'JSON.stringify([calc.Generations.get(8).moves.get("wickedblow").flags.punch,' +
       ' calc.Generations.get(8).moves.get("leechfang").flags.bite])'), '[1,1]');
 
+    // The -ate boost is 1.3x in Unbound (OLD_ATE_BOOST), read out of the ROM.
+    // See check/rom-ate.md. Salamence-Mega Double-Edge is one of the sets it moves.
+    check('-ate abilities boost by 1.3x, not 1.2x', await session.eval(
+      '(function () {' +
+      '  var gen = calc.Generations.get(8);' +
+      '  var target = new calc.Pokemon(gen, "Blissey", { level: 50 });' +
+      '  var dmg = function (ability) {' +
+      '    return calc.calculate(gen,' +
+      '      new calc.Pokemon(gen, "Salamence", { level: 50, ability: ability }),' +
+      '      target, new calc.Move(gen, "Double-Edge"), new calc.Field({})).damage[0];' +
+      '  };' +
+      '  var plain = dmg("Intimidate"), ate = dmg("Aerilate");' +
+      '  return Math.round((ate / plain) * 100) / 100;' +
+      '})()'),
+      // 1.3 for the boost, times 1.5 STAB gained by becoming Flying, less rounding.
+      1.95);
+
     // ROM-sourced corrections: both donors carry the generation 6 values here, the
     // cartridge carries the older ones. See check/rom-data.js.
     check('ROM base powers are applied', await session.eval(

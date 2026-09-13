@@ -786,6 +786,10 @@ function removeEvs(sets) {
     }
 }
 
+// Base power modifier for Aerilate, Pixilate, Refrigerate and Galvanize. Left
+// undefined unless a title sets one, so other titles keep this fork's default.
+var ATE_BP_MOD
+
 // Maps the flag names title data uses onto the names calc/mechanics reads.
 var ENGINE_MOVE_FLAGS = {
     "makesContact": "contact",
@@ -853,6 +857,10 @@ function loadDataSource(data) {
     // Titles whose sets come in tiers expose the selector; the rest never see it.
     if (data["tier"]) {
         initTierControl(data["tier"])
+    }
+
+    if (data["ate_bp_mod"]) {
+        ATE_BP_MOD = data["ate_bp_mod"]
     }
 
     if (data["extra_abilities"]) {
