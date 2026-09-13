@@ -6,6 +6,11 @@ var items_1 = require("../items");
 var result_1 = require("../result");
 var util_2 = require("./custom/util");
 
+function hasLiquidVoicePowerBoost(attacker, move) {
+    return attacker.hasAbility('Liquid Voice') && move.flags.sound &&
+        !(typeof LIQUID_VOICE_NO_BOOST !== 'undefined' && LIQUID_VOICE_NO_BOOST);
+}
+
 function calculateSMSS(gen, attacker, defender, move, field) {
 
     (0, util_2.checkCamomons)(attacker, field);
@@ -812,7 +817,7 @@ function calculateBPModsSMSS(gen, attacker, defender, move, field, desc, basePow
         bpMods.push(typeof ATE_BP_MOD !== 'undefined' && ATE_BP_MOD ? ATE_BP_MOD : 4915);
     }
     if ((attacker.hasAbility('Reckless') && (move.recoil || move.hasCrashDamage)) ||
-        (attacker.hasAbility('Liquid Voice') && move.flags.sound) ||
+        hasLiquidVoicePowerBoost(attacker, move) ||
         (attacker.hasAbility('Blademaster') && move.flags.sword)) {
         bpMods.push(4915);
         desc.attackerAbility = attacker.ability;
@@ -937,7 +942,7 @@ function calculateAtModsSMSS(gen, attacker, defender, move, field, desc) {
             ((attacker.hasAbility('Overgrow') && move.hasType('Grass')) ||
                 (attacker.hasAbility('Blaze') && move.hasType('Fire')) ||
                 (attacker.hasAbility('Torrent') && move.hasType('Water')) ||
-                (attacker.hasAbility('Swarm') && move.hasType('Bug')))) || (attacker.hasAbility("Liquid Voice") && move.flags.sound)) {
+                (attacker.hasAbility('Swarm') && move.hasType('Bug')))) || hasLiquidVoicePowerBoost(attacker, move)) {
         atMods.push(4915);
         desc.attackerAbility = attacker.ability;
     }

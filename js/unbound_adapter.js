@@ -221,6 +221,8 @@ function buildUnboundDataSource(donor, tier) {
         apply_move_flags: true,
         // 1.3x for the -ate abilities, read out of the ROM: see check/rom-ate.md.
         ate_bp_mod: 5325,
+        // Donor B retypes sound moves without either of A's inherited power boosts.
+        liquid_voice_no_boost: true,
         extra_abilities: extraAbilities
     };
     payload.tier = tier;
@@ -291,25 +293,25 @@ function setExistsInTier(tier, setName) {
 // mirrors that into the visible type selects so the page shows what it calculated.
 function initFieldEffects(selector) {
     $('.' + selector).removeClass('gone');
-    // Delegated, so it survives init_calc() reloading shared_controls.js. Only a
-    // user toggle redraws the types: running it during the load would fire set
-    // selection handlers before the title's data is in place.
+    // Delegated, so it survives init_calc() reloading shared_controls.js. Toggling
+    // off restores the selected sets' types; performCalculations keeps the display
+    // synchronized while enabled. Do not invoke selection handlers during loading.
     $(document).off('change.camomons').on('change.camomons', '#camomons', function () {
         showCamomonsTypes($(this).prop('checked'));
     });
 }
 
-function showCamomonsTypes(on) {
-    ['#p1', '#p2'].forEach(function (id) {
+function showCamomonsTypes(on, calculated) {
+    ['#p1', '#p2'].forEach(function (id, index) {
         var poke = $(id);
         if (!on) {
             // Put the species' own types back by re-running the set selection.
             poke.find('.set-selector').change();
             return;
         }
-        var first = poke.find('.move1 .move-type').val();
-        var second = poke.find('.move2 .move-type').val();
-        poke.find('.type1').val(first).change();
-        poke.find('.type2').val(second === first ? '' : second).change();
+        var types = calculated ? calculated[index].types : calc.getCamomonsTypes(createPokemon(poke));
+        // Reflect the calculation without firing another calculation or set reset.
+        poke.find('.type1').val(types[0]);
+        poke.find('.type2').val(types[1] || '');
     });
 }

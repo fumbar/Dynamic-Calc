@@ -304,6 +304,11 @@ function autosetWeather(ability, i) {
 		// ).css("width", `${bg_width}px`)
 		break;
 	case "Sand Stream":
+		// Preserve an explicitly selected Unbound boss field when changing Pokemon.
+		if (currentWeather === 'Vicious Sandstorm') {
+			lastAutoWeather[i] = currentWeather;
+			break;
+		}
 		lastAutoWeather[i] = "Sand";
 		$("#sand").prop("checked", true);
 		break;

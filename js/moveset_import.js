@@ -815,6 +815,7 @@ function addToDex(poke) {
 			for (var stale in customsets[poke.name]) {
 				if (/^My Box \d+$/.test(stale)) {
 					delete customsets[poke.name][stale];
+					removeImportedSet(poke.name, stale);
 				}
 			}
 		}
@@ -858,6 +859,19 @@ function updateDex(customsets) {
 		}
 	}
 	localStorage.customsets = JSON.stringify(customsets);
+}
+
+// Box actions must retain the slot, not just the species (duplicates use My Box 2, etc.).
+function importedSetIdentity(dataId) {
+	var boundary = dataId.lastIndexOf(" (");
+	return { species: dataId.slice(0, boundary), slot: dataId.slice(boundary + 2, -1) };
+}
+
+function removeImportedSet(species, slot) {
+	[SETDEX_SS, SETDEX_SM, SETDEX_XY, SETDEX_BW, SETDEX_DPP,
+		SETDEX_ADV, SETDEX_GSC, SETDEX_RBY, setdex].forEach(function (dex) {
+		if (dex && dex[species]) delete dex[species][slot];
+	});
 }
 
 function isValidJSON(str) {
@@ -952,6 +966,7 @@ function addSets(pokes, name) {
 			}
 		}
 	}
+	boxSlotsUsed = null;
 	if (addedpokes > 0) {
 		get_box()
 		// alert("Successfully imported " + addedpokes + " set(s)");
@@ -1054,15 +1069,16 @@ function checkExeptions(poke) {
 }
 
 $("#clearSets").click(function () {
+	var imported = JSON.parse(localStorage.customsets || "{}");
+	Object.keys(imported).forEach(function (species) {
+		Object.keys(imported[species]).forEach(function (slot) {
+			removeImportedSet(species, slot);
+		});
+	});
+	customSets = {};
 	localStorage.removeItem("customsets");
 	$("#importedSetsOptions").hide();
 	
-	// Remove Set Data from Dropdown
-	$('.trainer-pok.left-side').each(function() {
-		var species_name = $(this).attr('data-id').replace(" (My Box)", "")
-		delete SETDEX_BW[species_name]["My Box"]
-	})
-
 	// Remove Icons
 	$('.trainer-pok.left-side').remove()
 	$('#clear-party').click()

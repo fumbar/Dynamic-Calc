@@ -5,8 +5,9 @@ Written for: whoever works on this next, including the project owner.
 ## Start here
 
 You are picking up a merge that brings Pokemon Unbound into this fork of Dynamic-Calc.
-Ten commits sit on the local branch `dynamic-calc-merge-opus`, on top of upstream
-`1b8da408`. Nothing is pushed. The branch is named for the working copy at the owner's
+The implementation lives on local branch `dynamic-calc-merge-opus`, based on
+`1b8da408`. The review fixes are working-tree changes, not new commits. Check `git status`
+and `git log` for the current state. The branch is named for the working copy at the owner's
 request; the planning documents and ADR 0001 still call it `unbound-merge`. Do not rebase
 onto upstream — see [ADR 0001](adr/0001-long-lived-fork-no-upstream-rebase.md).
 
@@ -39,7 +40,7 @@ Cypress suite is not what this work uses.
 
 ## Map of the changes
 
-`git diff --stat master..HEAD` is the full list. What matters:
+`git diff --stat 1b8da408` includes both committed work and the review fixes. What matters:
 
 **The Unbound title itself**
 
@@ -57,7 +58,7 @@ Cypress suite is not what this work uses.
 **Generic loader changes in `js/showdown_hooks.js`** — each is driven by a key in the
 payload, so no title names were scattered through it: `isolate_tables`, `tier`,
 `field_effects`, `custom_poks`, `apply_move_flags`, `extra_abilities`, `ate_bp_mod`, plus
-`weightkg`/`nfe` now reaching `SPECIES_BY_ID`.
+`liquid_voice_no_boost`, and `weightkg`/`nfe` now reaching `SPECIES_BY_ID`.
 
 **Engine changes in `calc/`** — deliberately small: the three field flags in `field.js`,
 Vicious Sandstorm / Shadowy Veil / the `-ate` knob in `gen78.js`, Big Mo and the Camomons
@@ -80,6 +81,7 @@ in it. Adding a title-specific behaviour means adding a key here, not a title ch
 | `apply_move_flags` | Translate the source's flag names (`isPunch`) to the engine's (`flags.punch`), honouring an explicit `false` |
 | `extra_abilities` | Add ability names to the selector so a set's ability can actually be chosen |
 | `ate_bp_mod` | Base power modifier for the `-ate` abilities; Unbound sets 5325 (1.3x) |
+| `liquid_voice_no_boost` | Suppresses A's two inherited Liquid Voice damage boosts for Unbound; retyping remains active |
 | `field_effects` | CSS class of the title's own field controls, revealed on load |
 
 Older keys the loader already had (`move_replacements`, `custom_moves`, `poks_replacements`,
@@ -137,9 +139,11 @@ Every one of these produced a confident, wrong answer first.
 ## Where to pick up
 
 Roughly in priority order.
+These are follow-up options after trying the build, not authorization to begin another
+verification project. The owner accepted donor matching for the first build.
 
-1. **The design pass.** This is the owner's live request and the only thing they have asked
-   for directly. They prefer donor B's density — it sizes in `em` with a `100em` wrapper,
+1. **Try the first build, then gather design feedback.** The owner deferred design work
+   until hands-on use. Donor B sizes in `em` with a `100em` wrapper,
    where this fork has `min-width: 1256px` on the wrapper and two `min-width: 1540px`
    panels, which is what forces the spread. Deleting those values is not proof the page
    fits; the controls and team rails have to be inspected at the owner's real window width,
@@ -150,9 +154,8 @@ Roughly in priority order.
 3. **The Gem boost**, if you want another ROM constant. Unbound sets carry four kinds of
    Gem and 1.3x versus 1.5x is unresolved. Start from `check/rom-ate.md`, which records the
    procedure that works.
-4. **The two known engine divergences** under "Known and left alone" — Liquid Voice and
-   Multi-Attack. Both are inherited, both need a decision about blast radius across other
-   titles rather than more investigation.
+4. **Multi-Attack**, the inherited difference described under "Known and left alone".
+   Liquid Voice has a scoped Unbound correction now; it is not an open investigation.
 5. **Direct Unbound save import**, still unsupported. Text import is the route.
 
 Things deliberately not done, which you should not start without asking: rebasing onto
@@ -179,9 +182,10 @@ Expert. The tier selector next to the title does the same thing by rewriting the
 ```
 node check/run.js         # recorded damage fixtures, effects off
 node check/mechanics.js   # each ported effect, against donor B on identical inputs
+node check/review.js      # duplicate box actions, Camomons updates, weather, Liquid Voice
 node check/ui.js          # the real page in headless Chrome (51 checks)
-node check/agreement.js <tier>   # every trainer set, this fork vs donor B
-node check/rom-data.js           # loaded species and move data vs the cartridge
+node check/agreement.js <tier>   # optional broad donor comparison
+node check/rom-data.js           # optional species/move table comparison against the ROM
 ```
 
 No `npm install`. `check/ui.js` drives Chrome or Edge over the DevTools protocol and fails on
@@ -204,6 +208,28 @@ What each piece is:
 | `check/rom-ate.md` | How the `-ate` constant was disassembled — the procedure to reuse |
 
 A ROM check needs `roms/Pokemon Unbound Official.gba` present; the others do not.
+
+The review adds focused checks only. There is no new all-trainer sweep or ROM audit;
+the historical results below are not a claim that those broad checks were rerun after
+the review. Do not expand verification once the affected checks and baseline pass.
+
+Review verification completed: `node check/run.js`, `node check/mechanics.js`,
+`node check/review.js`, and `node check/ui.js` all passed. The existing browser smoke
+check covers all three tiers, the Cloud text export, and Renegade Platinum loading.
+The focused check covers the changed UI actions and Liquid Voice donor agreement;
+it does not establish full engine accuracy. `git diff --check` also passed.
+
+## Review fixes
+
+- Numbered imported sets retain their identity in selected removal and party previews.
+  Clear-all removes every imported slot, and smaller re-imports remove stale numbered
+  slots from the working dex as well as storage.
+- Camomons displays the types returned by the calculation after moves or selected
+  Pokemon change. The display does not trigger another calculation.
+- Sand Stream preserves an already selected Vicious Sandstorm. Ordinary Sand remains
+  ordinary Sand; the change does not automatically infer boss fields from trainer names.
+- Unbound's payload disables both inherited Liquid Voice damage boosts. Retyping is
+  unchanged, and other titles keep their existing behavior. The focused case matches B.
 
 ## What shipped
 
@@ -327,10 +353,11 @@ That attempt mostly did not succeed, and the failures are worth recording:
 STAB at 1.5x and Adaptability at 2x were read from CFRU source rather than the ROM, and
 match this calculator.
 
-**So: the data layer is ROM-verified, one damage constant is ROM-verified, and the damage
-formula as a whole is not.** Everything else rests on agreeing with two donor calculators,
-which is the ADR 0003 bar and is not the same as being right. The honest summary is that
-nobody — here or in either donor — has checked the formula against the cartridge.
+**Verification scope:** the original implementation compared species base stats/types
+and move power/type/split with selected ROM tables, and documented disassembly evidence
+for one damage constant. This does not verify all data fields, trainer teams, or the full
+damage formula. Other checks establish donor agreement for their selected inputs.
+The review did not independently repeat the ROM-table analysis or disassembly.
 
 The procedure in `check/rom-ate.md` is what works: find the shared `(x * k) / d` tail of a
 switch by hand, then read the constant each case sets, and corroborate against cases whose
@@ -406,12 +433,13 @@ base stats, types and weight, so a data difference cannot be mistaken for an eng
 Agreement is *lower* than it was before the ROM check, deliberately. Where the cartridge
 says both donors are wrong, this calculator follows the cartridge.
 
-Underneath that, the two data sets themselves match: species base stats and types agree
-100%, and the move data every set uses agrees 100%. Trainer sets agree on 98-99%, and every
-difference is a correction this fork applies and donor B does not.
+The original donor comparison reported matching species base stats/types and move data
+before the ROM-based move-power overrides. The final loaded Hydro Pump and Aura Sphere
+powers intentionally differ. Historical trainer-set differences include the corrections
+and exclusions described above; the comparison is not proof of in-game trainer accuracy.
 
-The unexplained column is inherited differences between this fork's engine and donor B's,
-present before the port and not introduced by it.
+This table records the pre-review run. Its unexplained column includes the Liquid Voice
+difference now corrected for Unbound. Counts were not recomputed in the focused review.
 
 Each ported effect was run on a case built to discriminate it and compared with donor B on
 identical inputs — explicit base stats, types and weights, and moves whose stock base power
@@ -419,35 +447,32 @@ matches in both engines, because donor B's stock move table carries older values
 `calculate()` re-clones the move from that table. All agree. With the effects off, six
 recorded stock-dex results are unchanged from before the merge.
 
-**This establishes port fidelity, not game accuracy.** No ROM observation was made; the ROM
-was not read at all. Per [ADR 0003](adr/0003-donor-matching-accepted-for-first-build.md) that
-is the agreed bar for this build, and [ADR 0002](adr/0002-unbound-ground-truth-from-rom.md)
-still stands for anything later.
+**The donor checks establish port fidelity for those cases.** The original implementation
+also read ROM tables and disassembled selected code as documented above; no emulator
+battle observations are recorded. Donor matching remains the first-build bar in
+[ADR 0003](adr/0003-donor-matching-accepted-for-first-build.md), with the ROM as arbiter
+under [ADR 0002](adr/0002-unbound-ground-truth-from-rom.md) for later disputed behavior.
 
 One intentional divergence from donor B: B implements Camomons in the UI by copying the first
 two move types into the type selects, which can leave both slots holding the same type — and
 the engine would then apply that type's effectiveness twice. The derivation here collapses
-repeats. Everything else matches.
+repeats. Other intentional and unresolved differences are documented separately above
+and below; this is not a claim of complete agreement.
 
 ## Known and left alone
 
 - `calc/mechanics/util.js` holds two copies of its helpers, one behind a
   `damageGen != 8 && damageGen != 7` guard. Only the copy the Unbound path runs was changed.
   Big Mo and Sand-Rush-in-Vicious-Sandstorm therefore do not apply below `dmgGen=7`.
-- The loader writes move flags as `flags.makesContact`, which the engine never reads — it
-  reads `flags.contact` — and its truthy test would drop an explicit `false`. Both are dead
-  for Unbound: all 14 donor `makesContact: false` overrides agree with stock, so no result
-  changes. Left alone rather than changed blind for ~30 other titles.
+- The historical loader writes source flag names such as `flags.makesContact`, while
+  the engine reads `flags.contact`, and uses truthy checks that skip explicit false.
+  Unbound opts into `apply_move_flags`, which translates supplied flags and honors false.
+  Other titles retain the historical path; they were not migrated in this merge.
 - The loader registers custom moves under `MOVES_BY_ID[8]` regardless of the selected
   generation. Unbound runs at gen 8, so this is correct here and untouched.
 - A's and donor B's parallel-speed helpers differ on paralysis in gen 7
   (`gen.num < 7` here, `gen.num != 7` there). Inherited, not introduced by this port.
-- **The three remaining disagreements with donor B**, all inherited and all left alone:
-  - *Liquid Voice* (Primarina, two sets). This fork gives it a power boost donor B does not.
-    The cause is operator precedence in `calc/mechanics/gen78.js`: an Inclement Emerald boost
-    sits outside its own `INC_EM &&` guard and leaks into every title. Liquid Voice grants no
-    power boost in the real games, so this fork is probably wrong - but the fix would change
-    Inclement Emerald and every other title, so it is reported rather than changed blind.
+- **Remaining historical donor discrepancies:**
   - *Multi-Attack* (Silvally, one set). This fork types the move from the user's first type;
     donor B types it from the Memory but does not change the user's type. Neither does both,
     which is what the real games do. Against the neutral test target the only difference is

@@ -789,6 +789,7 @@ function removeEvs(sets) {
 // Base power modifier for Aerilate, Pixilate, Refrigerate and Galvanize. Left
 // undefined unless a title sets one, so other titles keep this fork's default.
 var ATE_BP_MOD
+var LIQUID_VOICE_NO_BOOST = false
 
 // Maps the flag names title data uses onto the names calc/mechanics reads.
 var ENGINE_MOVE_FLAGS = {
@@ -804,6 +805,7 @@ var ENGINE_MOVE_FLAGS = {
 }
 
 function loadDataSource(data) {
+    LIQUID_VOICE_NO_BOOST = !!data.liquid_voice_no_boost
 
     // Titles that ask for it get their own copies of the tables this function
     // overrides in place, so the stock dex and stock move data are left intact.
@@ -1574,13 +1576,23 @@ $(document).ready(function() {
    })
 
    $(document).on('click', '#box-remove', function() {
-        var species = $('.set-selector')[0].value.split(" (")[0]
+        var dataId = $('.set-selector')[0].value
+        var selected = importedSetIdentity(dataId)
+        var species = selected.species
         var sets = JSON.parse(localStorage.customsets)
+        if (!sets[species] || !sets[species][selected.slot]) return
         if (confirm(`Delete ${species} from imported sets?`)) {
-            delete sets[species]['My Box']
-            delete SETDEX_BW[species]['My Box']
+            delete sets[species][selected.slot]
+            if (!Object.keys(sets[species]).length) delete sets[species]
+            removeImportedSet(species, selected.slot)
+            customSets = sets
             localStorage.customsets = JSON.stringify(sets)
-            $(`[data-id='${$('.set-selector')[0].value}']`).remove()
+            $('.trainer-pok.left-side').filter(function () {
+                return $(this).attr('data-id') === dataId
+            }).each(function () {
+                if ($(this).parent().hasClass('trainer-pok-container')) $(this).parent().remove()
+                else $(this).remove()
+            })
         }
    })
 
@@ -1645,9 +1657,11 @@ $(document).ready(function() {
 
 
         var data_id = $(this).attr('data-id')
-        var species_name = data_id.split(" (")[0]
+        var selected = importedSetIdentity(data_id)
+        var species_name = selected.species
         var sprite_name = species_name.toLowerCase().replace(" ","-").replace(".","").replace("’","").replace(":","-")
-        var set_data = customSets[species_name]["My Box"]
+        var set_data = customSets[species_name] && customSets[species_name][selected.slot]
+        if (!set_data) return
         set_data['moves'] = padArray(set_data['moves'], 4, "-")
 
         var pok = `<div class="trainer-pok-container">
