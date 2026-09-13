@@ -25,6 +25,16 @@ var UNBOUND_MOVE_ALIASES = {
     "Hidden Power (Fire?)": "Hidden Power Fire"
 };
 
+// Base powers read out of the ROM that both donors get wrong. The ROM is the
+// arbiter (ADR 0002): Unbound keeps the pre-generation-6 values for these, the way
+// it does for Surf, Thunderbolt, Flamethrower and Ice Beam at 95, which the donors
+// do have right. Verified against ROM md5 9cad8e771940e7f7094d13911552cef0, move
+// table 0xa769af, indices 56 and 359. See check/rom-data.js.
+var UNBOUND_ROM_BASE_POWER = {
+    "Hydro Pump": 120,
+    "Aura Sphere": 90
+};
+
 // Natures the donor states as something that is not a nature. Both donors carry
 // "72" on Miltank / Leader Mel in the Difficult tier; the intended nature is not
 // recoverable, so the set falls back to a neutral one and says so. Left as-is the
@@ -132,6 +142,18 @@ function applyUnboundSetCorrections(sets) {
 // calculate at 90 instead of Unbound's 95. Filled in rather than renamed, because
 // the rest of the application reads `bp` off the move table afterwards.
 function normaliseMoveBasePower(moveTable) {
+    var corrected = [];
+    for (var romName in UNBOUND_ROM_BASE_POWER) {
+        var entry = moveTable[romName];
+        if (entry && entry.bp !== UNBOUND_ROM_BASE_POWER[romName]) {
+            corrected.push(romName + " " + entry.bp + " -> " + UNBOUND_ROM_BASE_POWER[romName]);
+            entry.bp = UNBOUND_ROM_BASE_POWER[romName];
+        }
+    }
+    if (corrected.length) {
+        UNBOUND_NOTES.push("base power corrected from the ROM: " + corrected.join(", "));
+    }
+
     var filled = 0;
     for (var name in moveTable) {
         var move = moveTable[name];
@@ -197,9 +219,6 @@ function buildUnboundDataSource(donor, tier) {
         // Translate the donor's move flags to the names the engine reads: without
         // this, Iron Fist misses Wicked Blow and a custom move has no flags at all.
         apply_move_flags: true,
-        // Both Unbound donors apply 1.3x for the -ate abilities, where this fork
-        // defaults to the generation 7 value of 1.2x. See docs/HANDOFF.md.
-        ate_bp_mod: 5325,
         extra_abilities: extraAbilities
     };
     payload.tier = tier;

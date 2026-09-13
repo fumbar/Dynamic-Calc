@@ -192,8 +192,17 @@ function measureDonor() {
   return WORK(donor.calc, cSets, cPoks, NEUTRAL, PROBES);
 }
 
-function compareDamage(ours, theirs) {
-  let compared = 0, agree = 0;
+// Moves where this fork deliberately differs from donor B because the ROM says the
+// donors are wrong. Counted separately so the headline number stays meaningful.
+const ROM_BACKED_DIVERGENCE = ['Hydro Pump', 'Aura Sphere'];
+
+// Moves carried by an -ate ability. Both donors apply 1.3x; CFRU ships the 1.3x
+// switch (OLD_ATE_BOOST) commented out, so this fork keeps CFRU's 1.2x default.
+// Which one Unbound compiled is unresolved -- see docs/HANDOFF.md.
+const ATE_ABILITIES = ['Aerilate', 'Pixilate', 'Refrigerate', 'Galvanize'];
+
+function compareDamage(ours, theirs, setAbility) {
+  let compared = 0, agree = 0, romBacked = 0, ateBoost = 0;
   const mismatches = [];
   for (const key of Object.keys(theirs)) {
     if (!(key in ours)) continue;
@@ -201,10 +210,12 @@ function compareDamage(ours, theirs) {
     if (ours[key] === theirs[key]) agree++;
     else {
       const [label, dir, moveName] = key.split('');
+      if (ROM_BACKED_DIVERGENCE.indexOf(moveName) !== -1) { romBacked++; continue; }
+      if (ATE_ABILITIES.indexOf(setAbility(label)) !== -1) { ateBoost++; continue; }
       mismatches.push({ label, dir, moveName, mine: ours[key], donor: theirs[key] });
     }
   }
-  return { compared, agree, mismatches, skippedForMoveData: [] };
+  return { compared, agree, romBacked, ateBoost, mismatches, skippedForMoveData: [] };
 }
 
 // ------------------------------------------------------------------- report
@@ -237,10 +248,18 @@ console.log('   identical            : ' + moves.identical + '  (' + pct(moves.i
 moves.differing.slice(0, 10).forEach(d => console.log('     - ' + d));
 if (moves.differing.length > 10) console.log('     ... and ' + (moves.differing.length - 10) + ' more');
 
-const dmg = compareDamage(await measureOurs(), measureDonor());
+const abilityOf = label => {
+  const parts = label.split(' / ');
+  return ((cSets[parts[0]] || {})[parts[1]] || {}).ability || '';
+};
+const dmg = compareDamage(await measureOurs(), measureDonor(), abilityOf);
 console.log('\n3. ENGINE: same inputs, both engines, damage compared');
 console.log('   comparisons          : ' + dmg.compared);
 console.log('   agree                : ' + dmg.agree + '  (' + pct(dmg.agree, dmg.compared) + ')');
+console.log('   differ, ROM-backed   : ' + dmg.romBacked +
+  '  (this fork follows the ROM where the donors are wrong)');
+console.log('   differ, -ate boost   : ' + dmg.ateBoost +
+  '  (CFRU default 1.2x vs the donors 1.3x, unresolved)');
 console.log('   disagree             : ' + dmg.mismatches.length);
   const threwHere = dmg.mismatches.filter(m => String(m.mine).indexOf('THREW') === 0).length;
   const threwDonor = dmg.mismatches.filter(m => String(m.donor).indexOf('THREW') === 0).length;

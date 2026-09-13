@@ -29,6 +29,7 @@ node check/run.js         # recorded damage fixtures, effects off
 node check/mechanics.js   # each ported effect, against donor B on identical inputs
 node check/ui.js          # the real page in headless Chrome (51 checks)
 node check/agreement.js <tier>   # every trainer set, this fork vs donor B
+node check/rom-data.js           # loaded species and move data vs the cartridge
 ```
 
 No `npm install`. `check/ui.js` drives Chrome or Edge over the DevTools protocol and fails on
@@ -101,12 +102,49 @@ Comparing every trainer set against donor B then turned up the rest:
    Difficult-tier Leader Mel set carries `nature: "72"`, which is not a nature and threw.
    Both engine paths are guarded as well, because a crash is never the right answer to bad
    data. Donor B still crashes on these, which is why its column shows four throws above.
-8. **The -ate abilities used the wrong multiplier for Unbound.** Aerilate, Pixilate,
-   Refrigerate and Galvanize apply 1.2x here (the generation 7 value) and 1.3x in *both*
-   Unbound donors. That is roughly 8% on Champion Jax's Salamence-Mega and Elite Four
-   Arabella's Sylveon, among others. Now set per title, so only Unbound moves to 1.3x.
-   **This is donor-matched, not ROM-verified** - it is the one change made on donor consensus
-   alone, and the first thing to re-check if you ever read the ROM.
+8. **Hydro Pump and Aura Sphere had the wrong base power**, found by reading the ROM:
+   the cartridge says 120 and 90, both donors say 110 and 80. Corrected from the ROM, which
+   means this calculator now deliberately disagrees with both donors on those two moves.
+
+## What the ROM settled
+
+The cartridge (md5 `9cad8e771940e7f7094d13911552cef0`) was read directly — see
+[ADR 0004](adr/0004-rom-checked-data-layer.md) for the table offsets and how they were
+found. This is ground truth in the sense ADR 0002 means: numbers from the cartridge, not
+from another calculator.
+
+- **Species base stats and types: 99.48% agreement, and no difference at all on any
+  species a trainer uses.** The six differences are calculator-only pseudo-forms
+  (`Aegislash-Both`, the Castform weather forms) and two unused donor entries.
+- **Move power, type and split: 99.67% of the moves trainers use.**
+- **Two donor errors corrected against the cartridge: Hydro Pump is 120, not 110, and Aura
+  Sphere is 90, not 80.** Both donors have these wrong. Hydro Pump is common enough that
+  this matters; the calculator now deliberately disagrees with both donors here.
+- The `bp`/`basePower` loader bug is confirmed as real: the ROM gives Surf, Thunderbolt,
+  Flamethrower and Ice Beam 95, which is what the donor data says and the stock tables
+  did not.
+- CFRU source (pinned at `b637a27`) confirmed the Portal Power port exactly: 0.75x against
+  non-contact moves, behind a flag CFRU documents as Hoopa-Unbound's ability in Unbound.
+
+**What the ROM did not settle.** Base stats and move data are tables that can be read.
+Damage-formula constants are compiled code and were not. The live example is the `-ate`
+boost — see below.
+
+### The -ate boost is still open
+
+Aerilate, Pixilate, Refrigerate and Galvanize apply **1.2x here and 1.3x in both donors**.
+An earlier commit in this branch moved to 1.3x to match them. CFRU source then showed that
+1.3x comes from a compile-time switch, `OLD_ATE_BOOST`, that ships commented out — so 1.2x
+is what an unmodified build does, and two donors agreeing is not evidence that Unbound
+opted in. That commit is reverted; this fork keeps CFRU's default.
+
+It affects Champion Jax's Salamence-Mega, Elite Four Arabella's Sylveon and a handful of
+others, by about 8%. `check/agreement.js` counts these in their own row so the number is
+never quietly absorbed into "agreement".
+
+**One battle would settle it**: an `-ate` user hitting a target whose stats you know, with
+the damage written down. If you ever have the emulator open, that is the single most
+valuable observation left.
 
 ## Excluded records — please read
 
@@ -146,18 +184,21 @@ this fork in the real page (so `loadDataSource` has applied the title's data) an
 its own tables. Each set both attacks and defends, and every Pokemon is built from explicit
 base stats, types and weight, so a data difference cannot be mistaken for an engine one.
 
-| tier | comparisons | agree | genuine disagreements |
-|---|---|---|---|
-| Difficult | 2839 | 99.82% | 1 (4 more are donor B crashing on data this fork fixes) |
-| Expert | 3040 | 99.93% | 2 |
-| Insane | 3313 | 100.00% | 0 |
+| tier | comparisons | agree | ROM-backed differences | -ate, unresolved | unexplained |
+|---|---|---|---|---|---|
+| Difficult | 2839 | 99.12% | 16 | 4 | 5 (4 are donor B crashing) |
+| Expert | 3040 | 99.34% | 11 | 7 | 2 |
+| Insane | 3313 | 99.46% | 12 | 6 | 0 |
+
+Agreement is *lower* than it was before the ROM check, deliberately. Where the cartridge
+says both donors are wrong, this calculator follows the cartridge.
 
 Underneath that, the two data sets themselves match: species base stats and types agree
 100%, and the move data every set uses agrees 100%. Trainer sets agree on 98-99%, and every
 difference is a correction this fork applies and donor B does not.
 
-The three remaining disagreements are inherited differences between this fork's engine and
-donor B's, present before the port and not introduced by it.
+The unexplained column is inherited differences between this fork's engine and donor B's,
+present before the port and not introduced by it.
 
 Each ported effect was run on a case built to discriminate it and compared with donor B on
 identical inputs — explicit base stats, types and weights, and moves whose stock base power

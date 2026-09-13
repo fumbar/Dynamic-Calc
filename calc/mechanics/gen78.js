@@ -803,10 +803,12 @@ function calculateBPModsSMSS(gen, attacker, defender, move, field, desc, basePow
         }
     }
     if (!move.isMax && hasAteAbilityTypeChange) {
-        // 4915 is 1.2x, the generation 7 onward value this fork uses by default.
-        // A title may set ATE_BP_MOD to its own value: both Unbound donors use 5325
-        // (1.3x, the generation 6 value). Donor-matched, not verified against the ROM.
-        bpMods.push(typeof ATE_BP_MOD !== 'undefined' && ATE_BP_MOD ? ATE_BP_MOD : 4915);
+        // 4915 is 1.2x. Both Unbound donors use 5325 (1.3x), but CFRU's OLD_ATE_BOOST,
+        // which is what produces 1.3x, ships commented out -- so 1.2x is what an
+        // unmodified build does, and donor agreement is not evidence Unbound changed
+        // it. Left at the default until a ROM observation settles it. See
+        // docs/HANDOFF.md.
+        bpMods.push(4915);
     }
     if ((attacker.hasAbility('Reckless') && (move.recoil || move.hasCrashDamage)) ||
         (attacker.hasAbility('Liquid Voice') && move.flags.sound) ||

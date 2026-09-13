@@ -233,6 +233,12 @@ async function main() {
       'JSON.stringify([calc.Generations.get(8).moves.get("wickedblow").flags.punch,' +
       ' calc.Generations.get(8).moves.get("leechfang").flags.bite])'), '[1,1]');
 
+    // ROM-sourced corrections: both donors carry the generation 6 values here, the
+    // cartridge carries the older ones. See check/rom-data.js.
+    check('ROM base powers are applied', await session.eval(
+      'JSON.stringify([moves["Hydro Pump"].bp, moves["Aura Sphere"].bp,' +
+      ' moves["Surf"].bp, moves["Sucker Punch"].bp])'), '[120,90,95,70]');
+
     console.log('\n# text import');
     // A real Unbound Cloud box export from the owner's playthrough
     // (docs/example_box.txt): 18 Pokemon, 17 species, nicknames, and one species
