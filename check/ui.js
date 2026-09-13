@@ -8,7 +8,7 @@ const { withBrowser } = require('./browser');
 // Present on master too; unrelated to this merge.
 const KNOWN_PROBLEMS = [/console_watcher\.js/, /favicon\.ico/];
 
-const UNBOUND = '/index.html?data=unbound&gen=8&dmgGen=8&types=6&customPoks=1';
+const UNBOUND = '/index.html?data=unbound&gen=8&dmgGen=8&types=6';
 const RENPLAT = '/index.html?data=26138cc1d500b0cf7334&dmgGen=4&gen=7&switchIn=4&types=6';
 const LOADED = 'typeof TITLE !== "undefined" && typeof setdex === "object" && setdex !== null';
 
@@ -176,6 +176,51 @@ async function main() {
       'JSON.stringify([moves["Surf"].bp,' +
       ' calc.Generations.get(8).moves.get("surf").basePower,' +
       ' new calc.Move(calc.Generations.get(8), "Surf").bp])'), '[95,95,95]');
+
+    console.log('\n# text import');
+    // Representative Showdown-format text, not a verified Unbound Cloud export: no
+    // real export was available. It exercises the same parser a Cloud box export
+    // goes through, using a species whose Unbound base stats differ from stock.
+    const TEAM = [
+      'Liepard @ Life Orb',
+      'Ability: Prankster',
+      'Level: 50',
+      'EVs: 252 Atk / 252 Spe',
+      'Jolly Nature',
+      '- Knock Off',
+      '- Play Rough',
+      '- U-turn',
+      '- Sucker Punch',
+      '',
+      'Krookodile @ Choice Scarf',
+      'Ability: Intimidate',
+      'Level: 50',
+      'EVs: 252 Atk / 252 Spe',
+      'Adamant Nature',
+      '- Earthquake',
+      '- Crunch',
+      '- Stone Edge',
+      '- Close Combat',
+    ].join(String.fromCharCode(10));
+
+    await open(UNBOUND);
+    await session.eval('localStorage.removeItem("customsets")');
+    await open(UNBOUND);
+    await session.eval('addSets(' + JSON.stringify(TEAM) + ', "Cloud box")');
+    check('imported sets are stored', await session.eval(
+      'JSON.stringify(Object.keys(JSON.parse(localStorage.customsets)).sort())'),
+      '["Krookodile","Liepard"]');
+    check('imported sets are selectable', await session.eval(
+      'JSON.stringify([!!setdex["Liepard"], !!setdex["Krookodile"]])'), '[true,true]');
+    check('an imported Pokemon calculates off Unbound base stats', await session.eval(
+      '(function () {' +
+      '  var gen = calc.Generations.get(8);' +
+      '  var liepard = new calc.Pokemon(gen, "Liepard", { level: 50 });' +
+      '  return JSON.stringify([liepard.species.baseStats.atk, liepard.rawStats.atk]);' +
+      '})()'),
+      // Unbound gives Liepard 88 base Attack, not the stock 98; at level 50 with no
+      // EVs that is 108 rather than 118.
+      '[88,108]');
 
     console.log('\n# another title still loads');
     await session.open(base + RENPLAT, LOADED + ' && TITLE === "Renegade Platinum"');

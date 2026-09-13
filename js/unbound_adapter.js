@@ -130,7 +130,10 @@ function buildUnboundDataSource(donor, tier) {
         // the stock objects themselves. See isolateWorkingTables().
         isolate_tables: true,
         // The block of field controls this title exposes.
-        field_effects: "unbound-effects"
+        field_effects: "unbound-effects",
+        // Unbound carries species the stock dex has no entry for -- Shadow-Warrior
+        // is used by a trainer set -- so they must be created, not left to a URL flag.
+        custom_poks: true
     };
     payload.tier = tier;
 

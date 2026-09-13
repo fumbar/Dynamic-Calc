@@ -994,7 +994,7 @@ function loadDataSource(data) {
 
     const cleanString = (str) => str.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
-    if (TITLE.includes("Lumi") || customPoks) {
+    if (TITLE.includes("Lumi") || customPoks || data["custom_poks"]) {
 
         for (pok in jsonPoks) {
             var pok_id = cleanString(pok)
