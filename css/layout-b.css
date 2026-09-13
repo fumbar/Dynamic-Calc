@@ -259,3 +259,35 @@
 .info-group.top {
     margin-top: 20px;
 }
+
+/* ---- sprite rendering ----
+ * The sprites are 40x30 pixel art shown at roughly 2x (85x64 in the box, 80x60
+ * of content in the panel), and the browser's default smoothing turns that into
+ * blur. css/frags.css already renders its own sprites pixelated; this does the
+ * same for the ones on this page. Not geometry, but no colour either.
+ */
+.poke-sprite,
+.poke-sprite-weather,
+.trainer-pok,
+.trainer-pok-item,
+.player-poks img {
+    image-rendering: pixelated;
+}
+
+/* The held-item icon is a sibling image layered over the sprite, and the click
+ * handler is bound to .trainer-pok.left-side itself, so clicking the item hit
+ * the icon and selected nothing. It is decoration; let clicks through to the
+ * sprite underneath.
+ */
+.trainer-pok-item {
+    pointer-events: none;
+}
+
+/* The box sprites are 40x30 shown at height 64px -- 2.133x, so even pixelated
+ * some source pixels land on 2 screen pixels and others on 3, which is what
+ * still looks rough. 60px is exactly 2x and doubles every pixel evenly.
+ */
+.trainer-pok-list .pokesprite.left-side,
+.pokesprite .trainer-pok.left-side {
+    height: 60px;
+}
