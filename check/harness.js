@@ -8,16 +8,19 @@ const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
+// Donor B, the SkiDY Unbound mirror, so ported mechanics can be compared against
+// their source with identical inputs.
+const DONOR_B = 'D:/antigrav-projs/unbound-calc-reference';
 
-function browserScriptList() {
-  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+function browserScriptList(root = ROOT) {
+  const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const srcs = [...html.matchAll(/<script[^>]*\ssrc="(\.\/[^"?]+)[^"]*"/g)].map(m => m[1]);
   return srcs.filter(s => s.startsWith('./calc/'));
 }
 
 // `query` is the page's query string; calc/mechanics/util.js reads dmgGen from it,
 // so it is the real source of damageGen rather than the global set below.
-function load({ query = '?gen=8&dmgGen=8&types=6', globals = {} } = {}) {
+function load({ query = '?gen=8&dmgGen=8&types=6', globals = {}, root = ROOT } = {}) {
   const sandbox = {
     console,
     URLSearchParams,
@@ -52,12 +55,12 @@ function load({ query = '?gen=8&dmgGen=8&types=6', globals = {} } = {}) {
     { filename: 'index.html:shim' }
   );
 
-  const files = browserScriptList();
+  const files = browserScriptList(root);
   for (const rel of files) {
-    const file = path.join(ROOT, rel);
+    const file = path.join(root, rel);
     vm.runInContext(fs.readFileSync(file, 'utf8'), ctx, { filename: rel });
   }
   return { ctx, calc: sandbox.exports, sandbox, files };
 }
 
-module.exports = { load, browserScriptList };
+module.exports = { load, browserScriptList, ROOT, DONOR_B };

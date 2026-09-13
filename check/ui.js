@@ -145,6 +145,38 @@ async function main() {
     check('box set is selectable alongside the tier data', await session.eval(
       'JSON.stringify(!!(setdex["Pikachu"] && setdex["Pikachu"]["box test"]))'), 'true');
 
+    console.log('\n# field effects');
+    await open(UNBOUND);
+    check('Unbound field controls are visible', await session.eval(
+      'JSON.stringify([!document.querySelector(".unbound-effects").classList.contains("gone"),' +
+      ' !!document.querySelector("#vicious-sandstorm"), !!document.querySelector("#shadowyveil"),' +
+      ' !!document.querySelector("#bigmo"), !!document.querySelector("#camomons")])'),
+      '[true,true,true,true,true]');
+    check('createField carries the flags to the engine', await session.eval(
+      '(function () {' +
+      '  $("#shadowyveil").prop("checked", true);' +
+      '  $("#bigmo").prop("checked", true);' +
+      '  $("#camomons").prop("checked", true);' +
+      '  $("#vicious-sandstorm").prop("checked", true);' +
+      '  var f = createField();' +
+      '  $("#shadowyveil, #bigmo, #camomons, #vicious-sandstorm").prop("checked", false);' +
+      '  return JSON.stringify([f.isShadowyVeil, f.isBigMoField, f.isCamomonsBattle, f.weather]);' +
+      '})()'), '[true,true,true,"Vicious Sandstorm"]');
+    check('a field toggle changes the calculated damage', await session.eval(
+      '(function () {' +
+      '  var gen = calc.Generations.get(8);' +
+      '  var ghost = new calc.Pokemon(gen, "Gengar", { level: 50 });' +
+      '  var hitter = new calc.Pokemon(gen, "Blastoise", { level: 50 });' +
+      '  var move = new calc.Move(gen, "Surf");' +
+      '  var off = calc.calculate(gen, hitter, ghost, move, new calc.Field({}));' +
+      '  var on = calc.calculate(gen, hitter, ghost, move, new calc.Field({ isShadowyVeil: true }));' +
+      '  return JSON.stringify(off.damage) !== JSON.stringify(on.damage);' +
+      '})()'), true);
+    check('Unbound base power reaches the UI and the engine', await session.eval(
+      'JSON.stringify([moves["Surf"].bp,' +
+      ' calc.Generations.get(8).moves.get("surf").basePower,' +
+      ' new calc.Move(calc.Generations.get(8), "Surf").bp])'), '[95,95,95]');
+
     console.log('\n# another title still loads');
     await session.open(base + RENPLAT, LOADED + ' && TITLE === "Renegade Platinum"');
     checkClean('Renegade Platinum', session.problems);

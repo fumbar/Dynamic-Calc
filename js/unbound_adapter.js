@@ -91,6 +91,23 @@ function applyUnboundSetCorrections(sets) {
     return sets;
 }
 
+// The donor states base power as `bp`; loadDataSource reads `basePower`. Without
+// this every Unbound move would silently keep its stock base power -- Surf would
+// calculate at 90 instead of Unbound's 95. Filled in rather than renamed, because
+// the rest of the application reads `bp` off the move table afterwards.
+function normaliseMoveBasePower(moveTable) {
+    var filled = 0;
+    for (var name in moveTable) {
+        var move = moveTable[name];
+        if (typeof move.basePower === "undefined" && typeof move.bp !== "undefined") {
+            move.basePower = move.bp;
+            filled++;
+        }
+    }
+    if (filled) UNBOUND_NOTES.push("base power read from 'bp' for " + filled + " moves");
+    return moveTable;
+}
+
 // Builds the payload loadDataSource() consumes. Every object in it is a fresh copy,
 // so the loader's in-place overrides cannot reach back into the donor tables.
 function buildUnboundDataSource(donor, tier) {
@@ -107,11 +124,13 @@ function buildUnboundDataSource(donor, tier) {
     var payload = {
         formatted_sets: applyUnboundSetCorrections(deepCopy(collection)),
         poks: deepCopy(donor.pokedex),
-        moves: deepCopy(donor.unbound_moves),
+        moves: normaliseMoveBasePower(deepCopy(donor.unbound_moves)),
         title: UNBOUND_TITLE,
         // Tells loadDataSource to override copies of the shared tables rather than
         // the stock objects themselves. See isolateWorkingTables().
-        isolate_tables: true
+        isolate_tables: true,
+        // The block of field controls this title exposes.
+        field_effects: "unbound-effects"
     };
     payload.tier = tier;
 
@@ -167,4 +186,33 @@ function setExistsInTier(tier, setName) {
         if (collection[species][setName]) return true;
     }
     return false;
+}
+
+// Reveals the title's own field controls and keeps the Camomons type display in
+// step with the rule the engine applies. Donor B does Camomons in the UI only; here
+// the engine derives the types (calc/mechanics/util.js, checkCamomons) and this
+// mirrors that into the visible type selects so the page shows what it calculated.
+function initFieldEffects(selector) {
+    $('.' + selector).removeClass('gone');
+    // Delegated, so it survives init_calc() reloading shared_controls.js. Only a
+    // user toggle redraws the types: running it during the load would fire set
+    // selection handlers before the title's data is in place.
+    $(document).off('change.camomons').on('change.camomons', '#camomons', function () {
+        showCamomonsTypes($(this).prop('checked'));
+    });
+}
+
+function showCamomonsTypes(on) {
+    ['#p1', '#p2'].forEach(function (id) {
+        var poke = $(id);
+        if (!on) {
+            // Put the species' own types back by re-running the set selection.
+            poke.find('.set-selector').change();
+            return;
+        }
+        var first = poke.find('.move1 .move-type').val();
+        var second = poke.find('.move2 .move-type').val();
+        poke.find('.type1').val(first).change();
+        poke.find('.type2').val(second === first ? '' : second).change();
+    });
 }

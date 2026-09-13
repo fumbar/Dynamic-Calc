@@ -1260,6 +1260,9 @@ function createField() {
 	var isMagicRoom = $("#magicroom").prop("checked");
 	var isWonderRoom = $("#wonderroom").prop("checked");
 	var isInverseBattle = $("#inverse").prop("checked");
+	var isShadowyVeil = $("#shadowyveil").prop("checked");
+	var isBigMoField = $("#bigmo").prop("checked");
+	var isCamomonsBattle = $("#camomons").prop("checked");
 	var isGravity = $("#gravity").prop("checked");
 	var isSR = [$("#srL").prop("checked"), $("#srR").prop("checked")];
 	var weather;
@@ -1324,6 +1327,7 @@ function createField() {
 	};
 	return new calc.Field({
 		gameType: gameType, weather: weather, terrain: terrain, isMagicRoom: isMagicRoom, isWonderRoom: isWonderRoom, isGravity: isGravity, isInverseBattle: isInverseBattle,
+		isShadowyVeil: isShadowyVeil, isBigMoField: isBigMoField, isCamomonsBattle: isCamomonsBattle,
 		attackerSide: createSide(0), defenderSide: createSide(1)
 	});
 }

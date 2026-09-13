@@ -842,6 +842,11 @@ function loadDataSource(data) {
         initTierControl(data["tier"])
     }
 
+    // Field effects that only exist in one title stay hidden everywhere else.
+    if (data["field_effects"]) {
+        initFieldEffects(data["field_effects"])
+    }
+
     if (TITLE.includes("White") || TITLE.includes("Black") ) {
         baseGame = "BW"
         if (TITLE.includes("Black 2")) {

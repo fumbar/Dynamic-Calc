@@ -397,6 +397,14 @@ function getEndOfTurn(gen, attacker, defender, move, field) {
             texts.push('sandstorm damage');
         }
     }
+    else if (field.hasWeather('Vicious Sandstorm')) {
+        if (!defender.hasType('Rock', 'Ground', 'Steel') &&
+            !defender.hasAbility('Magic Guard', 'Overcoat', 'Sand Force', 'Sand Rush', 'Sand Veil') &&
+            !defender.hasItem('Safety Goggles')) {
+            damage -= Math.floor(defender.maxHP() / 8);
+            texts.push('vicious sandstorm damage');
+        }
+    }
     else if (field.hasWeather('Hail')) {
         if (defender.hasAbility('Ice Body')) {
             damage += Math.floor(defender.maxHP() / 16);
@@ -770,6 +778,9 @@ function buildDescription(description, attacker, defender) {
     }
     if (description.isWonderRoom) {
         output += ' in Wonder Room';
+    }
+    if (description.isShadowyVeil) {
+        output += ' in Shadowy Veil';
     }
     return output;
 }

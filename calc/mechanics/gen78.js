@@ -8,6 +8,8 @@ var util_2 = require("./custom/util");
 
 function calculateSMSS(gen, attacker, defender, move, field) {
 
+    (0, util_2.checkCamomons)(attacker, field);
+    (0, util_2.checkCamomons)(defender, field);
     (0, util_2.checkAirLock)(attacker, field);
     (0, util_2.checkAirLock)(defender, field);
     (0, util_2.checkForecast)(attacker, field.weather);
@@ -68,7 +70,7 @@ function calculateSMSS(gen, attacker, defender, move, field) {
         type =
             field.hasWeather('Sun', 'Harsh Sunshine') && !holdingUmbrella ? 'Fire'
                 : field.hasWeather('Rain', 'Heavy Rain') && !holdingUmbrella ? 'Water'
-                    : field.hasWeather('Sand') ? 'Rock'
+                    : field.hasWeather('Sand', 'Vicious Sandstorm') ? 'Rock'
                         : field.hasWeather('Hail') ? 'Ice'
                             : 'Normal';
         desc.weather = field.weather;
@@ -691,7 +693,7 @@ function calculateBPModsSMSS(gen, attacker, defender, move, field, desc, basePow
         desc.moveBP = basePower * 1.5;
     }
     else if (move.named('Solar Beam', 'Solar Blade') &&
-        field.hasWeather('Rain', 'Heavy Rain', 'Sand', 'Hail')) {
+        field.hasWeather('Rain', 'Heavy Rain', 'Sand', 'Vicious Sandstorm', 'Hail')) {
         bpMods.push(2048);
         desc.moveBP = basePower / 2;
         desc.weather = field.weather;
@@ -770,7 +772,7 @@ function calculateBPModsSMSS(gen, attacker, defender, move, field, desc, basePow
     }
     if ((attacker.hasAbility('Sheer Force') && move.secondaries && !move.isMax) ||
         (attacker.hasAbility('Sand Force') &&
-            field.hasWeather('Sand') && move.hasType('Rock', 'Ground', 'Steel')) ||
+            field.hasWeather('Sand', 'Vicious Sandstorm') && move.hasType('Rock', 'Ground', 'Steel')) ||
         (attacker.hasAbility('Analytic') &&
             (turnOrder !== 'first' || field.defenderSide.isSwitching)) ||
         (attacker.hasAbility('Tough Claws') && move.flags.contact) ||
@@ -1017,6 +1019,13 @@ function calculateDefenseSMSS(gen, attacker, defender, move, field, desc, isCrit
         defense = (0, util_2.pokeRound)((defense * 3) / 2);
         desc.weather = field.weather;
     }
+    // Unbound's Vicious Sandstorm extends the sandstorm special-defence boost to
+    // Ground types as well as Rock.
+    if (field.hasWeather('Vicious Sandstorm') &&
+        (defender.hasType('Rock') || defender.hasType('Ground')) && !hitsPhysical) {
+        defense = (0, util_2.pokeRound)((defense * 3) / 2);
+        desc.weather = field.weather;
+    }
 
     var dfMods = calculateDfModsSMSS(gen, attacker, defender, move, field, desc, isCritical, hitsPhysical);
     return (0, util_2.OF16)(Math.max(1, (0, util_2.pokeRound)((defense * (0, util_2.chainMods)(dfMods)) / 4096)));
@@ -1109,6 +1118,12 @@ function calculateFinalModsSMSS(gen, attacker, defender, move, field, desc, isCr
         !attacker.hasAbility('Parental Bond (Child)', 'ORAORAORAORA (Child)')) {
         finalMods.push(2048);
         desc.defenderAbility = defender.ability;
+    }
+    // Unbound's Shadowy Veil halves damage taken by Ghost types.
+    if (field.isShadowyVeil && defender.hasType('Ghost') &&
+        !attacker.hasAbility('Parental Bond (Child)', 'ORAORAORAORA (Child)')) {
+        finalMods.push(2048);
+        desc.isShadowyVeil = true;
     }
     if (defender.hasAbility('Fluffy') && move.flags.contact && !attacker.hasAbility('Long Reach')) {
         finalMods.push(2048);

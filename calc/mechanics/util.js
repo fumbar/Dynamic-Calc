@@ -671,6 +671,10 @@ function getFinalSpeed(gen, pokemon, field, side) {
     var weather = field.weather || '';
     var terrain = field.terrain;
     var speed = getModifiedStat(pokemon.rawStats.spe, pokemon.boosts.spe, gen);
+    // Unbound's Big Mo fight orders by weight instead of Speed.
+    if (field.isBigMoField) {
+        speed = getModifiedStat(getWeightFactor(pokemon) * pokemon.weightkg, pokemon.boosts.spe, gen);
+    }
     var mods = 1;
     if (pokemon.hasItem('Choice Scarf')) {
         mods *= 1.5;
@@ -683,7 +687,7 @@ function getFinalSpeed(gen, pokemon, field, side) {
     }
     if ((pokemon.hasAbility('Unburden') && pokemon.abilityOn) ||
         (pokemon.hasAbility('Chlorophyll') && weather.includes('Sun')) ||
-        (pokemon.hasAbility('Sand Rush') && weather === 'Sand') ||
+        (pokemon.hasAbility('Sand Rush') && (weather === 'Sand' || weather === 'Vicious Sandstorm')) ||
         (pokemon.hasAbility('Swift Swim') && weather.includes('Rain')) ||
         (pokemon.hasAbility('Slush Rush') && weather === 'Hail') ||
         (pokemon.hasAbility('Surge Surfer') && terrain === 'Electric')) {
@@ -727,6 +731,26 @@ function getMoveEffectiveness(gen, move, type, isGhostRevealed, isGravity) {
     }
 }
 exports.getMoveEffectiveness = getMoveEffectiveness;
+// Unbound's Camomons battle types a Pokemon by its first two moves. Kept as a
+// function on the Pokemon rather than in the UI so programmatic calculations get the
+// same answer the page shows. Repeated types collapse to one: a Pokemon cannot hold
+// the same type twice, and a duplicated slot would apply its effectiveness twice.
+function getCamomonsTypes(pokemon) {
+    var types = [];
+    for (var i = 0; i < 2 && i < pokemon.moves.length; i++) {
+        var type = pokemon.moves[i] && pokemon.moves[i].type;
+        if (type && types.indexOf(type) === -1) {
+            types.push(type);
+        }
+    }
+    return types.length ? types : pokemon.types;
+}
+exports.getCamomonsTypes = getCamomonsTypes;
+function checkCamomons(pokemon, field) {
+    if (!field.isCamomonsBattle) return;
+    pokemon.types = getCamomonsTypes(pokemon);
+}
+exports.checkCamomons = checkCamomons;
 function checkAirLock(pokemon, field) {
     if (pokemon.hasAbility('Air Lock', 'Cloud Nine')) {
         field.weather = undefined;
