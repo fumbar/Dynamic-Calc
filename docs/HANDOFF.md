@@ -1,11 +1,163 @@
 # Unbound merge: first build
 
-Written for: the project owner, and whoever picks the branch up next.
+Written for: whoever works on this next, including the project owner.
 
-Branch `dynamic-calc-merge-opus`, four commits on top of `1b8da408`. Named for the working
-copy at the owner's request; the planning documents and ADR 0001 call it `unbound-merge`.
-Scope follows [the revised plan](IMPLEMENTATION-PLAN-REVISED.md). Switch-in prediction and
-the design pass are deliberately not in this build.
+## Start here
+
+You are picking up a merge that brings Pokemon Unbound into this fork of Dynamic-Calc.
+Ten commits sit on the local branch `dynamic-calc-merge-opus`, on top of upstream
+`1b8da408`. Nothing is pushed. The branch is named for the working copy at the owner's
+request; the planning documents and ADR 0001 still call it `unbound-merge`. Do not rebase
+onto upstream — see [ADR 0001](adr/0001-long-lived-fork-no-upstream-rebase.md).
+
+Switch-in prediction and the design pass are deliberately not in this build.
+
+Read in this order: this file, then [the revised plan](IMPLEMENTATION-PLAN-REVISED.md) for
+scope and the owner's decisions, then [RUNTIME-TRACE.md](RUNTIME-TRACE.md) before you touch
+anything in `calc/`. The four ADRs record decisions you should not silently reverse.
+
+### What is on disk
+
+| What | Where | Notes |
+|---|---|---|
+| This fork ("A") | `D:/antigrav-projs/dynamic-calc-merge-opus` | the working copy |
+| Upstream original | `D:/antigrav-projs/dynamic-calc-proj` | unmodified, for comparison |
+| Donor B, SkiDY's Unbound mirror | `D:/antigrav-projs/unbound-calc-reference` | rev `6741d18`. Unbound mechanics. Self-contained, runs offline. The site the owner likes the look of |
+| Donor C, hzla's Unbound fork | `D:/antigrav-projs/dynamic-calc-unbound-reference` | rev `eb3226e`. The trainer/species/move data this build loads, from `backups/unbound.js` |
+| The ROM | `roms/Pokemon Unbound Official.gba` | md5 `9cad8e771940e7f7094d13911552cef0`, gitignored, never commit it |
+| CFRU source | **not on disk** | `git clone --depth 1 https://github.com/Skeli789/Complete-Fire-Red-Upgrade`. Findings here are pinned at `b637a27` (2025-01-24) |
+
+The donors are read-only references. Do not edit them; `check/agreement.js` runs donor B's
+engine from source and expects it unmodified.
+
+### Prerequisites
+
+Node (any recent version; built with 22) and Chrome or Edge, which `check/browser.js` finds
+at the usual Windows paths. Python 3 with `capstone` if you do ROM disassembly. There is no
+`npm install` — `package.json` lists Cypress but it is not installed and the inherited
+Cypress suite is not what this work uses.
+
+## Map of the changes
+
+`git diff --stat master..HEAD` is the full list. What matters:
+
+**The Unbound title itself**
+
+- `backups/unbound.js` — donor C's data verbatim, wrapped in an IIFE exporting
+  `UNBOUND_DONOR`. The wrapper exists because the donor assigns a bare global named
+  `pokedex`, which is this application's stock dex. Ends by calling the adapter to build
+  `backup_data`.
+- `js/unbound_adapter.js` — all the Unbound-specific logic: tier selection from `?m=`,
+  the record corrections, the payload handed to `loadDataSource()`, working-table
+  isolation, and the tier and field-effect controls. **New Unbound behaviour belongs
+  here, not in `showdown_hooks.js`.**
+- `backups/title_to_backup_mappings.js`, `index.html` — title registration, the tier
+  selector, and the Unbound field-effect controls.
+
+**Generic loader changes in `js/showdown_hooks.js`** — each is driven by a key in the
+payload, so no title names were scattered through it: `isolate_tables`, `tier`,
+`field_effects`, `custom_poks`, `apply_move_flags`, `extra_abilities`, `ate_bp_mod`, plus
+`weightkg`/`nfe` now reaching `SPECIES_BY_ID`.
+
+**Engine changes in `calc/`** — deliberately small: the three field flags in `field.js`,
+Vicious Sandstorm / Shadowy Veil / the `-ate` knob in `gen78.js`, Big Mo and the Camomons
+helper in `mechanics/util.js`, and two description strings in `desc.js`.
+
+**`js/moveset_import.js`** — two importer fixes, unrelated to Unbound, affecting every title.
+
+### The payload contract
+
+`loadDataSource(data)` is the seam. A title's backup file builds `backup_data` and every
+behaviour below is switched on by a key in it, which is why the loader has no Unbound name
+in it. Adding a title-specific behaviour means adding a key here, not a title check.
+
+| Key | Effect |
+|---|---|
+| `formatted_sets`, `poks`, `moves`, `title` | The pre-existing contract: sets, species, moves, display name |
+| `tier` | Shows the difficulty selector and pre-selects this tier |
+| `isolate_tables` | Override copies of `pokedex` / `moves` / `SPECIES_BY_ID[gen]` / `MOVES_BY_ID[g]` / `abilities` instead of the stock objects |
+| `custom_poks` | Create species the stock dex lacks, rather than needing `&customPoks=1` in the URL |
+| `apply_move_flags` | Translate the source's flag names (`isPunch`) to the engine's (`flags.punch`), honouring an explicit `false` |
+| `extra_abilities` | Add ability names to the selector so a set's ability can actually be chosen |
+| `ate_bp_mod` | Base power modifier for the `-ate` abilities; Unbound sets 5325 (1.3x) |
+| `field_effects` | CSS class of the title's own field controls, revealed on load |
+
+Older keys the loader already had (`move_replacements`, `custom_moves`, `poks_replacements`,
+`order`) are untouched and still work for other titles.
+
+### ROM offsets
+
+All located by pattern and asserted again at run time, so a different build fails loudly.
+They live as named constants in `check/rom.js` and `check/rom-data.js`; repeated here so you
+do not have to go looking.
+
+| Table | Offset | Layout |
+|---|---|---|
+| Species names | `0x166a98c` | stride 11, 1294 entries, index 1 = Bulbasaur |
+| Base stats | `0x19e0c9c` | stride 28. Order is HP, Atk, Def, **Speed**, SpA, SpD; types at +6/+7; abilities at +22/+23 and the hidden one at +26 |
+| Move names | `0xa40a10` | stride 13, generation 3 spellings (`ThunderPunch`), long names abbreviated (`Dazzle Gleam`) |
+| Move data | `0xa769af` | stride 12. Power +1, type +2, **split +10** (0/1/2 = Physical/Special/Status). **Not `0x900000`** — see the traps above |
+| Ability names | `0xa36398` | stride 17, DPE's expanded list. Use this for ability ids, not CFRU's header |
+| Ability power switch | `0x09cd4e6` | Cases funnel into a shared `(power * r3) / 10` tail at `0x09cd6fc` |
+
+Type ids are FireRed's with Fairy at 23.
+
+**`check/`** — everything test-related, described under Checks above. `check/harness.js`
+and `check/browser.js` are the two pieces other checks build on.
+
+## Traps that cost time here
+
+Every one of these produced a confident, wrong answer first.
+
+1. **`calc/mechanics/util.js` contains two copies of its helpers**, one inside a
+   `damageGen != 8 && damageGen != 7` guard. Unbound runs the top-level copy. Editing the
+   wrong one changes nothing and looks like the edit did not take.
+2. **`gen78.js` requires `./custom/util`, which the page never loads**, so those calls
+   resolve to `calc/mechanics/util.js` through the shared-`exports` shim. Editing
+   `calc/mechanics/custom/util.js` changes nothing in the browser.
+3. **The ROM has two move tables that both start with a valid Pound row.** `0x900000` is
+   `0xFF` filler past index ~690. The live one is `0xa769af`. Reading the dead one reports
+   false differences on Acid, Sucker Punch and everything DPE added.
+4. **Browser checks race the page.** Page globals from the *previous* document satisfy a
+   readiness expression while the new one is still loading. `session.open()` pins the wait
+   to the target URL for this reason; if you add a check that sets a control which
+   navigates, use `session.waitFor`, not another `open`.
+5. **Ability and hold-effect ids are renumbered by DPE.** Take them from the ROM's own
+   expanded ability name table at `0xa36398` (stride 17), not from CFRU's headers. CFRU
+   happened to agree for abilities; it did not obviously agree for hold effects.
+6. **Automated disassembly inference is unreliable here.** A script mapping the ability
+   switch reported Technician as 13 where hand-reading gives 15. Hand-read, then
+   corroborate against cases CFRU documents.
+7. **Line endings are mixed.** Most files are CRLF; the new ones are LF. Match whatever the
+   file already uses or the diff becomes unreadable.
+8. **`.gitignore` guards the ROM.** It was broken once by a careless append that joined
+   `/tools` and `/roms` into one entry. Check `git check-ignore -v roms/...` before staging
+   if you touch it.
+
+## Where to pick up
+
+Roughly in priority order.
+
+1. **The design pass.** This is the owner's live request and the only thing they have asked
+   for directly. They prefer donor B's density — it sizes in `em` with a `100em` wrapper,
+   where this fork has `min-width: 1256px` on the wrapper and two `min-width: 1540px`
+   panels, which is what forces the spread. Deleting those values is not proof the page
+   fits; the controls and team rails have to be inspected at the owner's real window width,
+   which has not been asked for yet. Keep the team previews.
+2. **Switch-in prediction**, deferred to a follow-up release by the owner. Section 7 of the
+   revised plan has the approach: reuse donor C's `get_next_in_cfru()` and prefer this
+   fork's `js/switch_prediction.js`.
+3. **The Gem boost**, if you want another ROM constant. Unbound sets carry four kinds of
+   Gem and 1.3x versus 1.5x is unresolved. Start from `check/rom-ate.md`, which records the
+   procedure that works.
+4. **The two known engine divergences** under "Known and left alone" — Liquid Voice and
+   Multi-Attack. Both are inherited, both need a decision about blast radius across other
+   titles rather than more investigation.
+5. **Direct Unbound save import**, still unsupported. Text import is the route.
+
+Things deliberately not done, which you should not start without asking: rebasing onto
+upstream, a general data/schema framework, migrating the inherited Cypress suite, and
+per-title box storage.
 
 ## Run it
 
@@ -36,6 +188,22 @@ No `npm install`. `check/ui.js` drives Chrome or Edge over the DevTools protocol
 any uncaught page exception or console error, apart from two pre-existing 404s
 (`js/console_watcher.js`, which is referenced by `index.html` but absent from the repository
 on `master` too, and `favicon.ico`).
+
+What each piece is:
+
+| File | Does |
+|---|---|
+| `check/harness.js` | Loads `calc/*` the way `index.html` does — same files, same order, same shared-`exports` shim. Takes a `root`, so it can load donor B too |
+| `check/browser.js` | Static server plus headless Chrome over the DevTools protocol, no package install. `withBrowser`, `session.open`, `session.eval`, `session.waitFor` |
+| `check/data-load.js` | Builds the Unbound payload in Node without a browser, for data-only questions |
+| `check/run.js`, `check/cases/`, `check/fixtures/` | Recorded damage fixtures; `--update` re-records |
+| `check/mechanics.js` | Each ported effect on a discriminating case, against donor B |
+| `check/agreement.js <tier>` | Every trainer set, this fork in the real page vs donor B |
+| `check/ui.js` | The real page: loading, tiers, data seams, isolation, field effects, import |
+| `check/rom.js`, `check/rom-data.js` | ROM reading and the data comparison |
+| `check/rom-ate.md` | How the `-ate` constant was disassembled — the procedure to reuse |
+
+A ROM check needs `roms/Pokemon Unbound Official.gba` present; the others do not.
 
 ## What shipped
 
@@ -290,9 +458,3 @@ repeats. Everything else matches.
 - `Zygarde-10%` has a `%` in its name, so its sprite URL is not valid percent-encoding and the
   sprite does not load. Cosmetic, pre-existing, and not specific to Unbound.
 - The box is still shared across titles, as agreed.
-
-## Next
-
-Prediction, the density pass, and anything ROM-verified. The fixture harness loads both this
-fork and donor B from source on stated inputs, so a ROM observation can be added to the same
-cases without rebuilding anything.
