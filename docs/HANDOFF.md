@@ -129,8 +129,45 @@ from another calculator.
 - **The `-ate` boost is 1.3x**, read out of the compiled code rather than the data
   tables. See below.
 
-**What the ROM did not settle.** Only the one damage constant above was disassembled. The
-rest of the damage formula is unread, and nothing here says it matches.
+### How much of the damage formula is verified: not much
+
+The `-ate` constant was disassembled and settled. An attempt was then made to do the same
+for the rest of the damage-affecting configuration — CFRU exposes it as a bounded list of
+compile flags (`OLD_CRIT_DAMAGE`, `OLD_GEM_BOOST`, `OLD_TERRAIN_BOOST`,
+`OLD_PARENTAL_BOND_DAMAGE`, `OLD_EXPLOSION_BOOST`, `OLD_SOUL_DEW_EFFECT`), which is the
+right shortlist because that is exactly where a calculator silently diverges.
+
+That attempt mostly did not succeed, and the failures are worth recording:
+
+- **Automating the switch mapping produced wrong answers.** A script that walked the
+  ability switch and reported each case's multiplier gave Technician 13, where reading the
+  same code by hand gives 15, and listed abilities that are not damage boosts at all. Those
+  numbers were discarded. Hand-reading worked; inference did not.
+- **Crit multiplier: probably 1.5x, on one site only.** A scan for "10 then 15 or 20 stored
+  to the same slot" returned four candidates, three of which turned out to be the divisor
+  in an unrelated `(x * K) / 10`. The one real-looking site (`0x09e1ef8`) sets a local to 10
+  and then to 15, which is the shape of `crit = BASE; if (crit) crit = CRIT_MULTIPLIER`, and
+  no site anywhere pairs 10 with 20. That points to 1.5x, which is what this calculator
+  uses — but it is one site, not the three independent corroborations the `-ate` finding
+  had, so it is *suggestive, not confirmed*.
+- **Gem boost: not determined.** Unbound sets carry Normal, Fighting, Fairy and Grass Gems,
+  so 1.3x versus 1.5x matters. The case found at `ITEM_EFFECT_GEM`'s CFRU id applies a
+  doubling, not either value, which means either DPE renumbers hold effects or that is not
+  the gem code. Unresolved, and not guessed at.
+- **Terrain boost, Parental Bond, explosion, Soul Dew: not looked at.**
+
+STAB at 1.5x and Adaptability at 2x were read from CFRU source rather than the ROM, and
+match this calculator.
+
+**So: the data layer is ROM-verified, one damage constant is ROM-verified, and the damage
+formula as a whole is not.** Everything else rests on agreeing with two donor calculators,
+which is the ADR 0003 bar and is not the same as being right. The honest summary is that
+nobody — here or in either donor — has checked the formula against the cartridge.
+
+The procedure in `check/rom-ate.md` is what works: find the shared `(x * k) / d` tail of a
+switch by hand, then read the constant each case sets, and corroborate against cases whose
+values CFRU documents. It is slow and it does not automate well. Each remaining constant is
+perhaps an hour of that.
 
 ### The -ate boost: settled by disassembling the ROM
 
