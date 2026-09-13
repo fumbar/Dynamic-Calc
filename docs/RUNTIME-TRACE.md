@@ -1,7 +1,7 @@
 # Runtime trace: which code runs for `gen=8&dmgGen=8`
 
-Milestone A, step 3. Brief trace only — see
-[the revised plan](IMPLEMENTATION-PLAN-REVISED.md) §3.
+Current runtime guide, refreshed 2026-09-13. Originally recorded for milestone A;
+see [HANDOFF.md](HANDOFF.md) for current scope and checks.
 
 ## Module resolution in the browser
 
@@ -57,8 +57,23 @@ The query string, not the global set in `showdown_hooks.js`, is the effective so
 
 `js/showdown_hooks.js` maps `?data=<id>` → title via `SOURCES`, then either loads
 `./backups/<file>.js` (which assigns `backup_data`) or fetches npoint, and calls
-`loadDataSource(data)`. That function mutates the shared tables in place: `pokedex`,
-`SPECIES_BY_ID[gen]`, `moves` and `MOVES_BY_ID[g]` — the stock dex the engine reads.
+`loadDataSource(data)`. For Unbound, `index.html` loads `js/unbound_adapter.js` first;
+the backup exposes `UNBOUND_DONOR` and constructs a corrected, copied tier payload.
+
+The loader mutates `pokedex`, `SPECIES_BY_ID[gen]`, `moves`, and `MOVES_BY_ID[g]`.
+With `isolate_tables`, the adapter's `isolateWorkingTables()` first copies the UI tables
+and engine lookup slots. Unbound opts in; older titles generally mutate the stock tables.
+Engine lookups read the replacement slots dynamically. Custom move insertion remains
+hardcoded to generation 8, so it is not a generic generation-independent data path.
+
+The tier control reloads the URL. Both bundled and remote load completion paths use
+`savedOpponentIsLoaded()` to validate the full saved species/set ID against `setdex`
+before restoring it. Left-side box restoration is independent. On loopback hosting,
+`localiseTitleOptions()` rewrites locally mapped dropdown entries and labels other
+entries as external; other hostnames retain the inherited routing behavior.
+
+This is full-page navigation, not live table reset/reconfiguration. The adapter is
+included on `index.html`, not universally on all mastersheet/planner entry points.
 
 ## Fixture harness
 

@@ -1,12 +1,16 @@
 # Unbound merge: integration plan
 
-Status: first-build scope settled through owner discussion, September 12, 2026.
-Planning only; implementation has not started.
+Status: historical first-build scope, settled September 12, 2026. Implementation is now
+complete for data, tiers, field effects, and text import; the geometry pass and subsequent
+navigation/restoration fixes also landed in the working copy. Prediction remains deferred.
+See [HANDOFF.md](HANDOFF.md) for current code, checks, limitations, and repository state.
 
-This is the proposed replacement for the sequencing and acceptance criteria in
+This replaced the sequencing and acceptance criteria in
 [the original plan](IMPLEMENTATION-PLAN.md). Keep that document as the source inventory
 and historical investigation record. Read [CONTEXT.md](../CONTEXT.md) for terminology.
 Section 9 records owner decisions and deferred questions for the coding handoff.
+The numbered milestones below retain their planning language as a decision record, not
+an instruction to repeat completed work or start deferred projects.
 
 ## 1. Approach and scope
 
@@ -327,7 +331,8 @@ Investigate each only far enough to implement the affected Unbound path correctl
 ## 9. Questions for the owner
 
 Resolved decisions below reflect the owner discussion. Deferred questions do not block
-the first build. Coding remains unstarted; this document does not initiate implementation.
+the first build. These are the decisions at planning time; current implementation status
+is maintained in the handoff rather than inferred from this historical checklist.
 
 1. Resolved: the first build is useful without switch-in prediction. Defer prediction
    to a follow-up release after data, tiers and field effects.

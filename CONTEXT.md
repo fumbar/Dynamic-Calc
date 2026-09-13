@@ -14,8 +14,10 @@ A title owns its own species, move and trainer data.
 _Avoid_: game, ROM, hack, source
 
 **Stock dex**:
-The unmodified Showdown species and move data the calculator falls back to. Always present;
-a title's data never replaces it globally.
+The Showdown species and move data available before title overrides. Unbound opts into
+independent working tables so its stock tables remain intact. Older titles still mutate
+shared tables within a page; full-page navigation reloads the stock data. Preservation is
+not a universal loader guarantee.
 _Avoid_: vanilla dex, base dex, default data
 
 **Trainer set**:

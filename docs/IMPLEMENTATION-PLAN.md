@@ -1,7 +1,10 @@
 # Unbound Merge — Implementation Plan
 
-**Audience:** a coding session starting cold, with no access to the conversation that produced this.
-Everything needed to begin is in this file or the files it points at.
+**Historical proposal, superseded for execution.** This preserves the original source inventory
+and investigation from before implementation. The [revised plan](IMPLEMENTATION-PLAN-REVISED.md)
+narrowed scope, and [HANDOFF.md](HANDOFF.md) is the current entry point for new agents.
+Paths, feature status, counts, and proposed verification work below describe that planning
+snapshot; do not treat them as current instructions or outstanding required work.
 
 **Goal:** fold the best of three Pokémon damage calculators into this fork — Unbound-specific field
 effects, Unbound data with difficulty tiers, CFRU switch-in prediction, and a tighter layout —

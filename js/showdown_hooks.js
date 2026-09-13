@@ -1240,6 +1240,46 @@ FIELD_EFFECTS = {}
 // True when served from a local dev server; used to keep local runs self-contained.
 IS_LOCAL = ['localhost', '127.0.0.1', '::1', ''].includes(location.hostname)
 
+// localStorage belongs to the origin, not to the loaded collection, so a remembered
+// opponent outlives the data it came from: another Unbound tier, or another title
+// served from here. Restoring a label the loaded collection does not hold leaves the
+// selector showing a trainer that cannot be calculated, so drop it and keep the
+// page's own default. The box selection on the left is not tier data, so it is left
+// alone. The ID is "Species (Set Name)", as shared_controls.js builds it.
+function savedOpponentIsLoaded() {
+    var id = localStorage["right"]
+    if (!id || id.indexOf(" (") === -1) {return false}
+    var species = id.substring(0, id.indexOf(" ("))
+    var setName = id.substring(id.indexOf("(") + 1, id.lastIndexOf(")"))
+    return !!(setdex && setdex[species] && setdex[species][setName])
+}
+
+// The title dropdown holds absolute URLs to the hosted calculators, so picking a
+// title leaves this build - and its origin, which is where the imported box and the
+// saved settings live. A title this build carries in ./backups/ is rewritten to load
+// here instead, using the same condition the loader below uses to choose local data.
+// Everything else keeps its hosted URL and is marked, so an option that deliberately
+// leaves is visible as such. The identifiers the hosted decomps use are not in
+// SOURCES, so they are never mistaken for a local title.
+function localiseTitleOptions() {
+    if (!IS_LOCAL) {return}
+    $('.calc-select option[data-source]').each(function() {
+        var source = $(this).attr('data-source').trim()
+        var id = source.includes('?')
+            ? new URLSearchParams(source.slice(source.indexOf('?'))).get('data')
+            : null
+
+        if (id && backupFiles[SOURCES[id]]) {
+            $(this).attr('data-source', './index.html' + source.slice(source.indexOf('?')))
+        } else {
+            $(this).attr('data-external', 'true')
+            if (!$(this).text().endsWith(' (external)')) {
+                $(this).text($(this).text().trim() + ' (external)')
+            }
+        }
+    })
+}
+
 
 if (params.get('data') == 'bd7fc78f8fa2500dfcca') {
     location.href = 'https://hzla.github.io/Dynamic-Calc/?data=26138cc1d500b0cf7334&gen=7&switchIn=4&types=6'
@@ -1386,6 +1426,8 @@ $(document).ready(function() {
     }
 
 
+    localiseTitleOptions()
+
     $(document).on('change', '.calc-select', function() {
         location.href = $('.calc-select option:selected').attr('data-source')
     })
@@ -1458,7 +1500,11 @@ $(document).ready(function() {
                     }
 
                     setTimeout(function() {
-                        if (localStorage["left"]) {
+                        if (!savedOpponentIsLoaded()) {
+                            delete localStorage["right"]
+                        }
+
+                        if (localStorage["right"]) {
                             var set = localStorage["right"]
                             $('.opposing').val(set)
                             $('.opposing').change()
@@ -1479,7 +1525,7 @@ $(document).ready(function() {
                           })
                         }
 
-                        if (localStorage["right"]) {
+                        if (localStorage["left"]) {
                             $(`[data-id='${localStorage["left"]}']`).click()
                         }             
                     }, 20)
@@ -1502,7 +1548,11 @@ $(document).ready(function() {
             final_type_chart = construct_type_chart()
 
             setTimeout(function() {
-                if (localStorage["left"]) {
+                if (!savedOpponentIsLoaded()) {
+                    delete localStorage["right"]
+                }
+
+                if (localStorage["right"]) {
                     var set = localStorage["right"]
                     $('.opposing').val(set)
                     $('.opposing').change()
@@ -1512,7 +1562,7 @@ $(document).ready(function() {
                     }
                 }
 
-                if (localStorage["right"]) {
+                if (localStorage["left"]) {
                     $(`[data-id='${localStorage["left"]}']`).click()
                 }             
             }, 100)

@@ -257,8 +257,9 @@ function isolateWorkingTables() {
 
 // Shows the tier selector and makes it navigate. Changing tier rewrites ?m= and
 // reloads, which keeps a chosen tier in the link and matches how this application
-// already switches titles. Any saved trainer selection that the new tier does not
-// contain is cleared, so the page does not restore a set that is no longer there.
+// already switches titles. A saved trainer selection the new tier does not contain is
+// dropped by savedOpponentIsLoaded() once the new collection is loaded, which also
+// covers opening a tier link directly, so nothing is cleared here.
 function initTierControl(tier) {
     var select = $('#tier-select');
     if (!select.length) return;
@@ -266,25 +267,10 @@ function initTierControl(tier) {
     select.off('change.tier').on('change.tier', function () {
         var chosen = $(this).val();
         if (chosen === tier) return;
-        if (!setExistsInTier(chosen, localStorage["right"])) {
-            delete localStorage["right"];
-            delete localStorage["left"];
-        }
         var q = new URLSearchParams(window.location.search);
         q.set('m', chosen);
         window.location.search = q.toString();
     });
-}
-
-// True when the remembered trainer set name is also present in the target tier.
-function setExistsInTier(tier, setName) {
-    if (!setName) return false;
-    var collection = UNBOUND_DONOR && UNBOUND_DONOR.formatted_sets[tier];
-    if (!collection) return false;
-    for (var species in collection) {
-        if (collection[species][setName]) return true;
-    }
-    return false;
 }
 
 // Reveals the title's own field controls and keeps the Camomons type display in

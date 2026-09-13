@@ -12,6 +12,20 @@ const UNBOUND = '/index.html?data=unbound&gen=8&dmgGen=8&types=6';
 const RENPLAT = '/index.html?data=26138cc1d500b0cf7334&dmgGen=4&gen=7&switchIn=4&types=6';
 const LOADED = 'typeof TITLE !== "undefined" && typeof setdex === "object" && setdex !== null';
 
+// A trainer set both the expert and insane collections carry, and one only expert
+// carries. Used to tell a stale saved selection from a still-valid one.
+const SHARED_SET = 'Floette (Lvl 19 Leader Mirskle)';
+const EXPERT_ONLY_SET = 'Absol (Lvl 27 Leader Vega)';
+// The opposing set selector, as the restoration path fills it in.
+const SELECTED = '$("input.opposing.set-selector").val()';
+// Splits a saved selection ID the way shared_controls.js does and looks it up in the
+// collection the page loaded. Defined on each page by open() below.
+const IN_COLLECTION = 'function inCollection(id) {' +
+  '  var sp = id.substring(0, id.indexOf(" ("));' +
+  '  var sn = id.substring(id.indexOf("(") + 1, id.lastIndexOf(")"));' +
+  '  return !!(setdex[sp] && setdex[sp][sn]);' +
+  '}';
+
 let failures = 0;
 
 function check(label, actual, expected) {
@@ -32,8 +46,10 @@ function checkClean(label, problems) {
 
 async function main() {
   await withBrowser(async ({ session, base }) => {
-    const open = (url, extra) =>
-      session.open(base + url, LOADED + (extra ? ' && ' + extra : ''));
+    const open = async (url, extra) => {
+      await session.open(base + url, LOADED + (extra ? ' && ' + extra : ''));
+      await session.eval(IN_COLLECTION);
+    };
 
     console.log('\n# tiers');
     const tiers = [['difficult', 223, 355], ['expert', 240, 380], ['insane', 265, 415]];
@@ -127,6 +143,9 @@ async function main() {
       'localStorage.setItem("customsets", JSON.stringify(' +
       '{"Pikachu": {"box test": {"level": 50, "moves": ["Thunderbolt", "", "", ""]}}}))');
     session.problems = [];
+    // A trainer both tiers carry. The remembered selection is the whole ID, species
+    // wrapper included, which is what the old membership test could not match.
+    await session.eval('localStorage["right"] = ' + JSON.stringify(SHARED_SET));
     await session.eval(
       'document.querySelector("#tier-select").value = "insane";' +
       '$("#tier-select").trigger("change")');
@@ -144,6 +163,79 @@ async function main() {
       'JSON.stringify(Object.keys(JSON.parse(localStorage.customsets)))'), '["Pikachu"]');
     check('box set is selectable alongside the tier data', await session.eval(
       'JSON.stringify(!!(setdex["Pikachu"] && setdex["Pikachu"]["box test"]))'), 'true');
+    await session.waitFor(SELECTED + ' === ' + JSON.stringify(SHARED_SET));
+    check('a trainer the new tier also has stays selected',
+      await session.eval('localStorage["right"]'), SHARED_SET);
+
+    console.log('\n# selection restoration');
+    // Opening a tier link directly never runs the tier control's change handler, so
+    // what the page actually loaded is what decides.
+    await open(UNBOUND + '&m=expert');
+    check('the two check sets are what this expects of the expert collection',
+      await session.eval('JSON.stringify([' + JSON.stringify(SHARED_SET) + ', ' +
+      JSON.stringify(EXPERT_ONLY_SET) + '].map(inCollection))'), '[true,true]');
+    await session.eval('localStorage["right"] = ' + JSON.stringify(EXPERT_ONLY_SET));
+    await open(UNBOUND + '&m=insane');
+    check('the expert-only set really is absent from the insane collection',
+      await session.eval('inCollection(' + JSON.stringify(EXPERT_ONLY_SET) + ')'), false);
+    await session.waitFor('!localStorage["right"]');
+    check('a trainer the loaded tier lacks is dropped, not restored',
+      await session.eval('JSON.stringify([localStorage["right"] || null, ' +
+      SELECTED + ' === ' + JSON.stringify(EXPERT_ONLY_SET) + '])'), '[null,false]');
+    await session.eval('localStorage["right"] = ' + JSON.stringify(SHARED_SET));
+    await open(UNBOUND + '&m=expert');
+    await session.waitFor(SELECTED + ' === ' + JSON.stringify(SHARED_SET));
+    check('a trainer the loaded tier has is restored',
+      await session.eval('localStorage["right"]'), SHARED_SET);
+    await session.eval(
+      'localStorage.removeItem("right"); localStorage.removeItem("left")');
+
+    console.log('\n# title selector');
+    await open(UNBOUND);
+    const option = function (text) {
+      return '(function () {' +
+        '  var o = Array.prototype.filter.call(' +
+        '    document.querySelectorAll(".calc-select option"),' +
+        '    function (o) { return o.text.trim() === ' + JSON.stringify(text) + '; })[0];' +
+        '  return JSON.stringify(o ? [o.getAttribute("data-source"),' +
+        '    o.getAttribute("data-external")] : null);' +
+        '})()';
+    };
+    // This build is the Unbound calculator; the option used to send the browser to
+    // the old hosted site, carrying another title's data identifier.
+    check('Unbound loads this build at its own entry point',
+      await session.eval(option('Unbound 2.1.1')),
+      '["./index.html?data=unbound&gen=8&types=6&dmgGen=8",null]');
+    check('a bundled title loads locally',
+      await session.eval(option('Renegade Platinum')),
+      '["./index.html?data=26138cc1d500b0cf7334&gen=7&switchIn=4&types=6&dmgGen=4",null]');
+    // Served by the hosted decomps under an identifier this build does not carry.
+    check('a title this build does not bundle stays external and is marked',
+      await session.eval(option('Emerald Kaizo (external)')),
+      '["https://hzla.github.io/Dynamic-Calc-Decomps/?data=ek","true"]');
+    check('no option still points at the old Unbound site', await session.eval(
+      'Array.prototype.filter.call(document.querySelectorAll(".calc-select option"),' +
+      ' function (o) { return (o.getAttribute("data-source") || "")' +
+      '   .includes("Dynamic-Calc-Unbound"); }).length'), 0);
+
+    // Exercise the change handler, not just the rewritten option attributes.
+    await session.eval('localStorage["left"] = "Pikachu (box test)";' +
+      'localStorage["right"] = ' + JSON.stringify(SHARED_SET) + ';' +
+      '$(".calc-select option").filter(function () {' +
+      ' return $(this).text().trim() === "Renegade Platinum";' +
+      '}).prop("selected", true); $(".calc-select").change()');
+    await session.waitFor('TITLE === "Renegade Platinum" && ' + LOADED +
+      ' && !localStorage["right"]');
+    check('dropdown navigation keeps this origin and the box selection', await session.eval(
+      'JSON.stringify([location.origin, localStorage["left"],' +
+      ' !!setdex.Pikachu["box test"]])'), JSON.stringify([base, 'Pikachu (box test)', true]));
+    await session.eval('$(".calc-select option").filter(function () {' +
+      ' return $(this).text().trim() === "Unbound 2.1.1";' +
+      '}).prop("selected", true); $(".calc-select").change()');
+    await session.waitFor('TITLE === "Unbound 2.1.1" && ' + LOADED +
+      ' && typeof backup_data === "object" && backup_data.tier === "expert"');
+    check('dropdown returns to this Unbound build with Expert by default',
+      await session.eval('location.origin'), base);
 
     console.log('\n# field effects');
     await open(UNBOUND);

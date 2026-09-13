@@ -1,5 +1,12 @@
 # Pokémon Damage Calculator
 
+> This is inherited upstream package documentation. This fork runs the checked-in
+> JavaScript through a shared browser `exports` shim; its referenced TypeScript build
+> setup is not present here. Do not install or rebuild this directory to run the app.
+> Start with [the handoff](../docs/HANDOFF.md) and
+> [runtime trace](../docs/RUNTIME-TRACE.md). The upstream badges and package instructions
+> below describe upstream, not verification of this fork.
+
 ![Test Status](https://github.com/smogon/damage-calc/workflows/Tests/badge.svg)
 [![npm version](https://img.shields.io/npm/v/@smogon/calc.svg)](https://www.npmjs.com/package/@smogon/calc)&nbsp;
 

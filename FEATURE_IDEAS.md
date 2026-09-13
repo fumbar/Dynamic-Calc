@@ -2,6 +2,10 @@
 
 Running list of ideas for Dynamic Calc. Newest ideas go at the bottom.
 
+Status checked 2026-09-13: these remain future work. See [the handoff](docs/HANDOFF.md)
+for implemented behavior. Loopback title selection now keeps locally mapped bundled
+titles in this fork; that is separate from arbitrary local JSON loading or ROM extraction.
+
 ## Local ROM hack data fetching / creating
 
 Today a calc's data comes from a remote npoint.io bin (`?data=<npoint_id>`), with a

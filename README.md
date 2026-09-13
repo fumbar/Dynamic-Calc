@@ -3,6 +3,27 @@
 # Dynamic Calc
 A showdown calculator fork with dynamic data source loading and expanded features for nuzlockes
 
+## Run this fork
+
+Serve the repository root over HTTP with an available static server, such as
+`python -m http.server 8000`. No application build or `npm install` is required.
+Open `http://localhost:8000/index.html?data=unbound&gen=8&dmgGen=8&types=6`.
+
+Unbound includes Difficult, Expert (default), and Insane tiers, field effects, text import,
+and the compact layout. Its switch-in prediction and direct `.sav` import remain deferred.
+On loopback hosting, locally mapped title options stay in this fork; other options display
+`(external)` and leave the origin. Other hostnames retain inherited routing behavior.
+
+For development, start with [docs/HANDOFF.md](docs/HANDOFF.md). It contains the current
+implementation map, checks, known omissions, and source references. The focused baseline
+is `node check/run.js`; browser regressions are `node check/ui.js` (Node 22+ and Chrome/Edge).
+The [audit](docs/AUDIT-2026-09-13.md) records reviewed fixes and remaining data/import limits.
+
+The features and upstream screenshots below are inherited documentation. Their presence
+does not establish that every title supports every feature; use the handoff for this build's
+Unbound scope. Remote npoint data is still supported, but arbitrary local JSON loading and
+ROM extraction are future ideas, not implemented workflows.
+
 ## Features for Nuzlockers
   
 ### Imported Set Preview

@@ -1,5 +1,10 @@
 # Unbound ground truth comes from the ROM, with CFRU source narrowing the search
 
+Scope clarification: [ADR 0003](0003-donor-matching-accepted-for-first-build.md) narrowed
+the first-build verification requirement; the broad investigation proposed below is not
+an outstanding release gate. [ADR 0004](0004-rom-checked-data-layer.md) records the ROM
+evidence obtained. The ROM's authority remains unchanged.
+
 Both reference calculators compute Unbound with gen 8 mechanics, but Unbound runs on CFRU —
 a Gen 3 engine with later mechanics selectively backported — so wherever CFRU deviates from
 gen 8 both references are wrong in the same direction, and comparing them against each other
