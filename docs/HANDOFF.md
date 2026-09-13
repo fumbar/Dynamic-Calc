@@ -479,13 +479,27 @@ base stats, types and weight, so a data difference cannot be mistaken for an eng
 | tier | comparisons | agree | ROM-backed differences | unexplained |
 |---|---|---|---|---|
 | Difficult | 2839 | 99.30% | 16 | 4 (all four are donor B crashing) |
-| Expert | 3040 | 99.57% | 11 | 2 |
+| Expert | 3040 | 99.61% | 11 | 1 (Multi-Attack; this fork is the correct one) |
 | Insane | 3313 | 99.64% | 12 | 0 |
 
-The Difficult row was re-run on 2026-09-13 and reads 99.30% with 4 unexplained, where this
-table previously recorded 99.26% with 5. One real disagreement was resolved between that
-figure being written and the integration commit. **Expert and Insane have not been re-run
-since, so assume they carry the same staleness.**
+**All three rows re-run 2026-09-13.** Every figure here is current. Two moved, both in this
+fork's favour, because the table had been written before the last engine work landed:
+
+| tier | was recorded | re-run | what changed |
+|---|---|---|---|
+| Difficult | 99.26%, 5 unexplained | 99.30%, 4 | one real disagreement resolved |
+| Expert | 99.57%, 2 unexplained | 99.61%, 1 | one real disagreement resolved |
+| Insane | 99.64%, 0 | 99.64%, 0 | unchanged |
+
+Species data is 100% identical on every tier (223, 240 and 265 species). Neither engine
+threw on Expert or Insane; the four Difficult disagreements are all donor B crashing.
+
+The single remaining unexplained case, on Expert, is Silvally / Lvl 80 Title Defense Zeph
+attacking with Multi-Attack under RKS System and a Steel Memory: this fork reads 142-168,
+donor B reads 95-112. The ratio is STAB, and Silvally holding a Memory *is* that type in
+game, so **this fork's number is right and donor B's is wrong**. The mechanism is still the
+inherited one described under "Known and left alone" — right answer, wrong route — so it
+would only mislead on a Silvally whose listed type does not match its Memory.
 
 Agreement is *lower* than it was before the ROM check, deliberately. Where the cartridge
 says both donors are wrong, this calculator follows the cartridge.
