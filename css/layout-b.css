@@ -1,0 +1,261 @@
+/* Donor B's layout and sizing (unbound-calc-reference), palette-free.
+ *
+ * Loaded last on index.html only, so the mastersheet, planner and fragsheet
+ * pages are untouched. Every rule here is geometry: widths, type scale,
+ * spacing. No colour is declared anywhere in this file, so the dark palette in
+ * main.css continues to apply unchanged.
+ *
+ * Donor B has no sprites and no team rails, so it offers nothing to copy for
+ * those. They are kept and rescaled here to the tighter grid.
+ */
+
+/* ---- page ground ----
+ * Donor B: max-width 1285px, padding 0 1em. This fork stretched to the viewport
+ * with a 1540px floor, which the width <= 1540px media query then cancelled.
+ */
+.wrapper {
+    width: auto;
+    max-width: 1285px;
+    min-width: 0;
+    padding: 0 1em;
+    margin: 0 auto;
+}
+
+.credits {
+    max-width: 1285px;
+    padding: 20px;
+    margin: 0 auto;
+}
+
+/* ---- the type scale ----
+ * The whole size difference against donor B came from this one declaration.
+ * Both sheets set 10pt Verdana on html, body; this fork then set panels to
+ * 18px, inflating every em-based width inside them by ~35%.
+ */
+.panel {
+    font-size: inherit;
+}
+
+@media (width > 1180px) {
+    .panel {
+        max-width: none;
+    }
+}
+
+/* ---- the three columns ----
+ * Donor B sizes these in em so they track the type scale above.
+ */
+@media (width > 1180px) {
+    .poke-info {
+        width: 30em;
+    }
+
+    .field-info, .poke-import {
+        width: 27.5em;
+        max-width: none;
+    }
+}
+
+.panel-wrapper {
+    min-width: 0;
+}
+
+/* ---- sprites, kept ----
+ * main.css sizes the sprite as calc(100% - 430px), a constant tuned for the
+ * 18px panel (30em = 540px there). At donor B's scale 30em is ~400px, which
+ * makes that expression negative and the sprite disappears. Expressed in em it
+ * tracks the type scale instead.
+ */
+.poke-sprite {
+    max-width: 7em;
+}
+
+/* ---- header ----
+ * main.css centres #rom-title with position:absolute inside .header-settings,
+ * which is a space-between flex row. The tier select stays in the flow and
+ * lands under the centred title. Donor B keeps the title in the flow with the
+ * tier row beside it, which removes the overlap without repositioning anything.
+ */
+#rom-title {
+    position: static;
+    font-weight: bold;
+    width: auto;
+    font-size: 1.5em;
+    text-align: left;
+    margin-right: 1em;
+}
+
+.header-settings {
+    min-width: 0;
+}
+
+/* ---- middle column ----
+ * .field-info is 27.5em inside a wider flex column, so all the slack collects
+ * on its right and reads as a gap before Pokemon 2. Centring the column's
+ * children splits it evenly.
+ */
+@media (width > 1180px) {
+    .panel-mid {
+        align-items: center;
+    }
+
+    /* Battle Notes and Import / Export sit in a second wrapper that stays full
+     * width, so its fieldsets hang left of the centred Field block above.
+     */
+    .panel-mid .poke-import {
+        float: none;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* ---- control density ----
+ * main.css sets an explicit font-size on the form controls themselves
+ * (a bare `input { font-size: 18px }` among others), so they do not follow the
+ * panel type scale above. Donor B leaves them at the inherited 10pt. This is
+ * the rest of the size difference: 18px inputs and 16px selects against donor
+ * B's 13.3px, which also stretches every stat row.
+ */
+.panel input, .panel select, .panel textarea {
+    font-size: 1em;
+}
+
+.poke-info input[type="number"] {
+    width: 3em;
+}
+
+/* The stat grid carries a 2px margin and 2px padding per input that donor B
+ * does not, which is what stretched each stat row by 4px.
+ */
+.poke-info input,
+.poke-info td input {
+    padding: 1px 2px;
+    margin: 0;
+}
+
+/* ---- narrow: collapse the middle column ----
+ * main.css already reflows below 1180px: .panel-wrapper wraps and .panel-mid
+ * takes order 2 with width 100%, so Field drops to its own row under the two
+ * Pokemon columns. It did not work because those columns are sized
+ * calc(50vw - 10px) against the viewport while the wrapper adds padding: 0 1em,
+ * so the pair overflowed the content box by a few px and wrapped as well,
+ * stacking all three. Sizing them against the wrapper keeps them paired.
+ */
+@media (width <= 1180px) {
+    .panel.third:not(.panel-mid):first-child,
+    .panel.third:not(.panel-mid):nth-child(3n) {
+        width: calc(50% - 6px);
+    }
+
+    /* The rest of that block is a touch-scale enlargement: 40-60px rows, 18-24px
+     * type and 60px margins. Donor B keeps one density at every width, so it is
+     * neutralised back to the inherited scale here.
+     */
+    .info-group.info-selectors select,
+    .info-group.info-selectors label,
+    .panel-mid .btn,
+    .move1 input, .move1 label, .move1 select,
+    .move2 input, .move2 label, .move2 select,
+    .move3 input, .move3 label, .move3 select,
+    .move4 input, .move4 label, .move4 select,
+    #exportL, #exportR,
+    .poke-import .bs-btn, #clearSets {
+        height: auto;
+        line-height: normal;
+        font-size: 1em;
+    }
+
+    /* .info-group.top keeps main.css's 60px clearance: #player-tags (Learnset,
+     * Save, Add to Party, Remove) is positioned above it and would otherwise
+     * collide with the Type row.
+     */
+
+    /* The narrow block gives .info-group.top.opp 60px to clear the taller tag
+     * buttons. Pokemon 1 needs the same, or the two panels sit 40px apart.
+     */
+    .panel .info-group.top, .panel .info-group.top.opp {
+        margin-top: 60px;
+    }
+
+    .info-group.info-selectors {
+        margin-top: 1em;
+    }
+
+    .move-selector {
+        width: 11.5em;
+        height: auto;
+        line-height: normal;
+    }
+
+    .small-select.select2-container .select2-choice {
+        width: auto;
+        height: 18px;
+        line-height: 18px;
+    }
+
+    .panel-mid .btn-wide {
+        width: 7em;
+    }
+
+    .panel-mid .btn-xwide {
+        width: 8em;
+    }
+
+    #exportL, #exportR,
+    .poke-import .bs-btn, #clearSets {
+        width: auto;
+    }
+}
+
+/* ---- field buttons ----
+ * Widths and type already match donor B (117/95/63/53px at 0.8em). The height
+ * came from main.css's `.btn.btn-xxxwide { height: 30px; line-height: 30px }`,
+ * which donor B does not have -- it sizes that class by width alone. Scoped to
+ * the field column so btn-xxxwide elsewhere keeps its fixed height.
+ */
+.panel-mid .btn.btn-xxxwide {
+    height: auto;
+    line-height: normal;
+}
+
+/* Donor B laps button borders by a pixel instead of spacing them by two. */
+.panel-mid .btn {
+    margin-top: -1px;
+}
+
+/* ---- the Unbound field effects ----
+ * Four btn-xxxwide labels in one wrapping row. Three fit per row, but only
+ * "Big Mo's Weight Room" runs to two lines, so the row goes ragged and
+ * Camomons is orphaned underneath. Donor B shows its four equivalents as an
+ * even 2x2, which is what constraining the row to two buttons and giving them
+ * a common two-line height produces.
+ */
+.panel-mid .unbound-effects {
+    max-width: 240px;
+    margin: 0 auto;
+}
+
+.panel-mid .unbound-effects .btn {
+    min-height: 2.6em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ---- P1 / P2 alignment ----
+ * main.css pins .right-table to height: 205px, a constant sized for the old
+ * 18px type scale. The table itself is 143px at donor B's scale, so 62px of
+ * dead space sat under Pokemon 2's stat grid and pushed everything below it
+ * out of line with Pokemon 1.
+ */
+.right-table {
+    height: auto;
+}
+
+/* #player-tags (Save, Remove, Add to Party) is absolutely positioned at
+ * top: 71px and ends where .info-group.top used to begin. Matching the 20px
+ * the opposing side already uses clears it and squares the two panels.
+ */
+.info-group.top {
+    margin-top: 20px;
+}
