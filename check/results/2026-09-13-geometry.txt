@@ -1,0 +1,28 @@
+
+# type scale and column widths at 1276px
+  ok  panel font is the inherited 10pt, not 18px   (donor B 13.3333px)
+  ok  .poke-info is donor B's 30em   (donor B 422)
+  ok  .field-info is donor B's 27.5em   (donor B 389)
+
+# form controls follow the panel scale
+  ok  number input font   (donor B 13.3333px)
+  ok  number input size   (donor B 48x21, 2px taller by its own padding)
+  ok  select font   (donor B 13.3333px)
+  ok  select size   (donor B 70x19)
+  ok  stat row pitch   (donor B 23; this fork is 2px tighter)
+  ok  field button height   (donor B 23)
+
+# the two panels line up
+  ok  Pokemon 1 and 2 start at the same height
+  ok  stat tables are the same height   (.right-table must not be pinned to 205px)
+
+# sprite rendering
+  ok  panel sprite is left smoothed
+  ok  pokesprite box tile is pixelated   (scoped to the 40x30 set; newhd is downscaled and must stay smooth)
+
+# no horizontal scroll, and the narrow reflow
+  ok  page fits at 1276px
+  ok  page fits at 1126px
+  ok  panels still aligned at 1126px   (the <= 1180px block gives .top.opp its own margin)
+
+all geometry checks passed

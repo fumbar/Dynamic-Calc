@@ -1,0 +1,73 @@
+using 8
+Unbound data notes (difficult):
+  abilities added to the selector: Flower Veil, Chlorophyll, Shield Dust, Limber, Pressure, Keen Eye, Inner Focus, Early Bird, Hyper Cutter, Sand Veil, Poison Heal, Mold Breaker, Fluffy, Dry Skin, Scrappy, Cute Charm, Huge Power, Blaze, Moxie, Justified, Snow Cloak, Flash Fire, Pixilate, Sturdy, Levitate, Intimidate, Volt Absorb, Guts, Iron Fist, Regenerator, Adaptability, Merciless, Swift Swim, Water Bubble, Sniper, Super Luck, Compound Eyes, Technician, Sand Rush, Sound Waves, Water Absorb, Disguise, Stance Change, Harvest, Prankster, Honey Gather, Serene Grace, Sap Sipper, Hydration, Rock Head, Bulletproof, Aerilate, Storm Drain, Unnerve, Reckless, Unaware, Synchronize, Overcoat, Solar Power, Pickup, Gluttony, Shadow Tag, Soundproof, Overgrow, Long Reach, No Guard, Strong Jaw, Insomnia, Magic Bounce, Natural Cure, Torrent, Liquid Voice, Magician, Portal Power, Anticipation, Trace, Lightning Rod, Snow Warning, Refrigerate, Sheer Force, Defeatist, Klutz, Effect Spore, Swarm, Pure Power, Drizzle, Multieye, Sand Force, Queenly Majesty, Multiscale, Competitive, Thick Fat, Grassy Surge, Drought, Parental Bond, Poison Touch, Corrosion, Gooey, Iron Barbs, Aftermath, Speed Boost, Weak Armor, Defiant, Skill Link, Pickpocket, Oblivious, Icy Skin, Beast Boost, Gale Wings, Contrary, Electric Surge, Magic Guard, Surge Surfer, Berserk, Motor Drive, Sand Stream, Steam Engine, Tough Claws, Clear Body, Triage, Battle Bond, Punk Rock, Flame Body, Shed Skin, Desolate Land, Teravolt, Turboblaze, Delta Stream, Wonder Guard
+  excluded set, species field is a trainer label -- Supply and Demand: Lvl 53 Science Society Scientist |Supply and Demand|
+  excluded set, species field is a trainer label -- Rogue Electivire: Lvl 59 Science Society Scientist |Rogue Electivire|
+  move name corrected: 'Hidden Power (Fire?)' -> 'Hidden Power Fire'
+  move name corrected: 'Freeze Dry' -> 'Freeze-Dry'
+  move left blank, no match found: 'Bad Tantrum' on Pupitar / Lvl 47 Rival 4 |Player Chose Gible|
+  nature '72' is not a nature, using Serious on Miltank / Lvl 36 Leader Mel
+  item name corrected: 'Houndoomite' -> 'Houndoominite'
+  item name corrected: 'Flynium Z' -> 'Flyinium Z'
+  item name corrected: 'Weakmess Policy' -> 'Weakness Policy'
+  item name corrected: 'Kangaskhite' -> 'Kangaskhanite'
+  base power corrected from the ROM: Hydro Pump 110 -> 120, Aura Sphere 80 -> 90
+  base power read from 'bp' for 873 moves
+
+Unbound difficult tier, this fork vs donor B
+
+1. trainer set data (donor C, which this fork loads, vs donor B)
+   sets present in both : 231
+   identical            : 225  (97.40%)
+   differing            : 6
+     - Miltank / Lvl 36 Leader Mel
+     - Houndoom-Mega / Lvl 81 Title Defense Zeph
+     - Primarina / Lvl 79 Title Defense Solenk
+     - Archeops / Lvl 84 Battleground Alice
+     - Dragonite / Lvl 79 Title Defense Solenk
+     - Glaceon / Lvl 34 Sinnoh Leader Candice
+
+2a. species data (base stats and types)
+   species in both      : 223
+   identical            : 223  (100.00%)
+
+2b. move data (base power, type, category) for moves the sets use
+   moves used           : 355
+   identical            : 353  (99.44%)
+     - Aura Sphere
+     - Hydro Pump
+
+3. ENGINE: same inputs, both engines, damage compared
+   comparisons          : 2839
+   agree                : 2819  (99.30%)
+   differ, ROM-backed   : 16  (this fork follows the ROM where the donors are wrong)
+   differ, -ate boost   : 0  (should be 0: the ROM settled this at 1.3x)
+   disagree             : 4
+     this fork threw      : 0
+     donor B threw        : 4
+   skipped, move data differs : 0
+
+   disagreements by move:
+        1  Tackle
+        1  Ember
+        1  Water Gun
+        1  Vine Whip
+
+   every disagreement, with the set ability and item:
+     Ho-Oh / Lvl 46 Ruins of Void
+       defending Tackle  ability=Pressure [here/donor]  item=Sacred Ash
+       here  [27,27,28,28,28,28,30,30,30,30,30,31,31,31,31,33]
+       donor THREW: Cannot read properties of undefined (reading 'megaEvolves')
+     Ho-Oh / Lvl 46 Ruins of Void
+       defending Ember  ability=Pressure [here/donor]  item=Sacred Ash
+       here  [6,6,6,6,6,6,6,6,6,7,7,7,7,7,7,7]
+       donor THREW: Cannot read properties of undefined (reading 'megaEvolves')
+     Ho-Oh / Lvl 46 Ruins of Void
+       defending Water Gun  ability=Pressure [here/donor]  item=Sacred Ash
+       here  [24,24,26,26,26,26,26,26,26,28,28,28,28,28,28,30]
+       donor THREW: Cannot read properties of undefined (reading 'megaEvolves')
+     Ho-Oh / Lvl 46 Ruins of Void
+       defending Vine Whip  ability=Pressure [here/donor]  item=Sacred Ash
+       here  [5,5,5,5,5,5,5,5,5,5,5,6,6,6,6,6]
+       donor THREW: Cannot read properties of undefined (reading 'megaEvolves')
+

@@ -1,0 +1,53 @@
+using 8
+Unbound data notes (expert):
+  abilities added to the selector: Flower Veil, Chlorophyll, Technician, Triage, Unburden, Pressure, Pickpocket, Super Luck, Shields Down, Hyper Cutter, Sand Veil, Poison Heal, Early Bird, Aerilate, Infiltrator, Fluffy, Adaptability, Scrappy, Huge Power, Overgrow, Contrary, Defiant, Snow Cloak, Pixilate, Heatproof, Galvanize, Sturdy, Water Absorb, Mold Breaker, Overcoat, Stamina, Iron Fist, Thick Fat, Guts, Regenerator, Water Veil, Swift Swim, Water Bubble, Flame Body, Levitate, Sound Waves, Sand Rush, Intimidate, Disguise, Stance Change, Harvest, Mummy, Prankster, Beast Boost, Shield Dust, Serene Grace, Misty Surge, Gooey, Hydration, Rock Head, Storm Drain, Royal Roar, Unaware, Simple, Synchronize, Solar Power, Blaze, Magic Bounce, Inner Focus, Strong Jaw, Shadow Tag, Bellow, Long Reach, Clear Body, Natural Cure, Torrent, Liquid Voice, Portal Power, Poison Touch, Trace, Multiscale, Psychic Surge, Electric Surge, Snow Warning, Refrigerate, Limber, Sheer Force, Klutz, Effect Spore, Swarm, Pure Power, Drizzle, Multieye, Sand Force, Queenly Majesty, Fiery Neigh, Grassy Surge, Drought, Parental Bond, Insomnia, Analytic, Iron Barbs, Aftermath, Speed Boost, Weak Armor, Corrosion, Skill Link, Icy Skin, RKS System, Shocking Neigh, Gale Wings, Soundproof, Justified, Magic Guard, Surge Surfer, Berserk, Motor Drive, Sand Stream, Steam Engine, Tough Claws, Battle Bond, Reckless, No Guard, Volt Absorb, Punk Rock, Filter, Solid Rock, Shed Skin, Rough Skin, Desolate Land, Teravolt, Turboblaze, Delta Stream, Wonder Guard
+  excluded set, species field is a trainer label -- Supply and Demand: Lvl 53 Science Society Scientist |Supply and Demand|
+  excluded set, species field is a trainer label -- Rogue Electivire: Lvl 59 Science Society Scientist |Rogue Electivire|
+  excluded set, species field is a trainer label -- [2nd: Lvl 47 Light of Ruin Vega
+  move name corrected: 'Heatt Wave' -> 'Heat Wave'
+  move name corrected: 'Freeze Dry' -> 'Freeze-Dry'
+  move name corrected: 'DIscharge' -> 'Discharge'
+  item name corrected: 'Houndoomite' -> 'Houndoominite'
+  item name corrected: 'Kangaskhite' -> 'Kangaskhanite'
+  base power corrected from the ROM: Hydro Pump 110 -> 120, Aura Sphere 80 -> 90
+  base power read from 'bp' for 873 moves
+
+Unbound expert tier, this fork vs donor B
+
+1. trainer set data (donor C, which this fork loads, vs donor B)
+   sets present in both : 248
+   identical            : 245  (98.79%)
+   differing            : 3
+     - Houndoom-Mega / Lvl 81 Title Defense Zeph
+     - Typhlosion / Lvl 76 Mega Trainer Portia
+     - Glaceon / Lvl 34 Sinnoh Leader Candice
+
+2a. species data (base stats and types)
+   species in both      : 240
+   identical            : 240  (100.00%)
+
+2b. move data (base power, type, category) for moves the sets use
+   moves used           : 342
+   identical            : 340  (99.42%)
+     - Hydro Pump
+     - Aura Sphere
+
+3. ENGINE: same inputs, both engines, damage compared
+   comparisons          : 3040
+   agree                : 3028  (99.61%)
+   differ, ROM-backed   : 11  (this fork follows the ROM where the donors are wrong)
+   differ, -ate boost   : 0  (should be 0: the ROM settled this at 1.3x)
+   disagree             : 1
+     this fork threw      : 0
+     donor B threw        : 0
+   skipped, move data differs : 0
+
+   disagreements by move:
+        1  Multi-Attack
+
+   every disagreement, with the set ability and item:
+     Silvally / Lvl 80 Title Defense Zeph
+       attacking Multi-Attack  ability=RKS System [here/donor]  item=Steel Memory
+       here  [142,144,145,147,148,150,151,154,156,157,159,160,162,163,165,168]
+       donor [95,96,97,98,99,100,101,103,104,105,106,107,108,109,110,112]
+

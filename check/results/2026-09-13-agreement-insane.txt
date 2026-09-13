@@ -1,0 +1,43 @@
+using 8
+Unbound data notes (insane):
+  abilities added to the selector: Flower Veil, Chlorophyll, Technician, Triage, Unburden, Magic Bounce, Pressure, Super Luck, Defiant, Sturdy, Poison Heal, Sand Veil, Reckless, Aerilate, Infiltrator, Inner Focus, Adaptability, Thick Fat, Guts, Parental Bond, Battle Armor, Huge Power, Contrary, Snow Warning, Snow Cloak, Pixilate, Victory Star, Motor Drive, Surge Surfer, Mold Breaker, Clear Body, Flare Boost, Flash Fire, Stamina, Beast Boost, Regenerator, Justified, Steadfast, Intimidate, Levitate, Volt Absorb, Swift Swim, Water Bubble, Rock Head, Solid Rock, Swarm, Sound Waves, Sand Rush, Tough Claws, Heatproof, Storm Drain, Sand Force, Long Reach, Water Absorb, Mummy, Shadow Tag, Analytic, Unaware, Serene Grace, Fairy Aura, Multiscale, Soundproof, Teravolt, Delta Stream, Air Lock, Shed Skin, Torrent, Berserk, Moxie, Simple, Prankster, Pickpocket, Magic Guard, Overcoat, Solar Power, Competitive, Symbiosis, Strong Jaw, Stance Change, Rain Dish, Synchronize, Gale Wings, Shocking Neigh, Dark Aura, Shield Dust, Soul Heart, Hydration, Filter, Grassy Surge, Portal Power, Trace, Primordial Sea, Misty Surge, Telepathy, Psychic Surge, Electric Surge, Iron Fist, Refrigerate, Limber, Scrappy, Sheer Force, Klutz, Pure Power, Drizzle, Natural Cure, Multieye, Queenly Majesty, Fiery Neigh, Drought, Vital Spirit, Poison Touch, Insomnia, Iron Barbs, Aftermath, Speed Boost, Weak Armor, Corrosion, Disguise, Icy Skin, Prism Armor, Download, Shell Armor, Bad Dreams, Lightning Rod, Multitype, Shadow Shield, Friend Guard, Intrepid Sword, Power Construct, Sand Stream, Steam Engine, Desolate Land, Wonder Guard, Turboblaze, Skill Link, Rough Skin
+  excluded set, species field is a trainer label -- Supply and Demand: Lvl 53 Science Society Scientist |Supply and Demand|
+  excluded set, species field is a trainer label -- Rogue Electivire: Lvl 59 Science Society Scientist |Rogue Electivire|
+  move name corrected: 'ThunderPunch' -> 'Thunder Punch'
+  item name corrected: 'Kangaskhite' -> 'Kangaskhanite'
+  item name corrected: 'Houndoomite' -> 'Houndoominite'
+  item name corrected: 'Necrozium Z' -> 'Ultranecrozium Z'
+  base power corrected from the ROM: Hydro Pump 110 -> 120, Aura Sphere 80 -> 90
+  base power read from 'bp' for 873 moves
+
+Unbound insane tier, this fork vs donor B
+
+1. trainer set data (donor C, which this fork loads, vs donor B)
+   sets present in both : 278
+   identical            : 274  (98.56%)
+   differing            : 4
+     - Kangaskhan-Mega / Lvl 37 Leader Mel
+     - Aerodactyl-Mega / Lvl 75 Elite Four Moleman
+     - Aerodactyl-Mega / Lvl 85 Battleground Tessy
+     - Necrozma-Dawn-Wings / Lvl 85 Battleground Mirskle
+
+2a. species data (base stats and types)
+   species in both      : 265
+   identical            : 265  (100.00%)
+
+2b. move data (base power, type, category) for moves the sets use
+   moves used           : 333
+   identical            : 331  (99.40%)
+     - Aura Sphere
+     - Hydro Pump
+
+3. ENGINE: same inputs, both engines, damage compared
+   comparisons          : 3313
+   agree                : 3301  (99.64%)
+   differ, ROM-backed   : 12  (this fork follows the ROM where the donors are wrong)
+   differ, -ate boost   : 0  (should be 0: the ROM settled this at 1.3x)
+   disagree             : 0
+     this fork threw      : 0
+     donor B threw        : 0
+   skipped, move data differs : 0
+

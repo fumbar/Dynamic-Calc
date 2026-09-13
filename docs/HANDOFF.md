@@ -236,6 +236,7 @@ node check/run.js         # recorded damage fixtures, effects off
 node check/mechanics.js   # each ported effect, against donor B on identical inputs
 node check/review.js      # duplicate box actions, Camomons updates, weather, Liquid Voice
 node check/ui.js          # the real page in headless Chrome (51 checks)
+node check/geometry.js    # the measured layout against donor B (17 checks)
 node check/agreement.js <tier>   # optional broad donor comparison
 node check/rom-data.js           # optional species/move table comparison against the ROM
 ```
@@ -256,6 +257,8 @@ What each piece is:
 | `check/mechanics.js` | Each ported effect on a discriminating case, against donor B |
 | `check/agreement.js <tier>` | Every trainer set, this fork in the real page vs donor B |
 | `check/ui.js` | The real page: loading, tiers, data seams, isolation, field effects, import |
+| `check/geometry.js` | The measured layout: type scale, column widths, control sizes, panel alignment, sprite rendering, the narrow reflow. Serves donor B alongside and prints its values for context, asserting only on this fork |
+| `check/results/` | Dated stdout from the runs the figures in this document come from. Evidence, not fixtures — regenerate rather than trust if the engine has moved |
 | `check/rom.js`, `check/rom-data.js` | ROM reading and the data comparison |
 | `check/rom-ate.md` | How the `-ate` constant was disassembled — the procedure to reuse |
 
@@ -270,6 +273,39 @@ Review verification completed: `node check/run.js`, `node check/mechanics.js`,
 check covers all three tiers, the Cloud text export, and Renegade Platinum loading.
 The focused check covers the changed UI actions and Liquid Voice donor agreement;
 it does not establish full engine accuracy. `git diff --check` also passed.
+
+## Auditing these claims
+
+Everything asserted in this document is reproducible from the repository. Nothing below
+needs the owner's machine state beyond the two donor checkouts and, for the ROM checks
+only, the cartridge.
+
+```
+node check/geometry.js           # the layout numbers in "The look"
+node check/agreement.js expert   # the agreement table; also difficult, insane
+node check/ui.js                 # behaviour of the real page
+node check/run.js                # recorded damage fixtures
+node check/mechanics.js          # each ported effect against donor B
+node check/review.js             # box actions, Camomons, weather, Liquid Voice
+```
+
+`check/results/` holds the dated stdout of the runs these figures were taken from, so a
+reader can diff a fresh run against what was claimed rather than take the numbers on
+trust. They are evidence of a moment, not fixtures: if the engine has moved, the honest
+move is to re-run and replace them.
+
+**What the suites do not cover.** They are behaviour checks, with the single exception of
+`check/geometry.js`. No suite renders a pixel or compares an image, and none exercises the
+`newhd` sprite path — which is how a blanket `image-rendering` rule shipped, passed all 51
+UI checks, and was caught only by eye. Treat green suites as evidence about behaviour and
+measured geometry, and nothing else.
+
+**What agreement with donor B is not.** It is agreement between two calculators. Where both
+are wrong about the cartridge, they agree and this table says nothing. The ROM checks
+(`check/rom-data.js`, `check/rom.js`, `check/rom-ate.md`) are the only things here that
+appeal to ground truth, and they cover the data tables and two constants, not the engine as
+a whole. The trainer sets that differ between donors have not been adjudicated against the
+cartridge at all.
 
 ## Review fixes
 
