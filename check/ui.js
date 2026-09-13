@@ -177,6 +177,62 @@ async function main() {
       ' calc.Generations.get(8).moves.get("surf").basePower,' +
       ' new calc.Move(calc.Generations.get(8), "Surf").bp])'), '[95,95,95]');
 
+    console.log('\n# donor data the stock tables cannot resolve');
+    await open(UNBOUND);
+    // The ability selector is rebuilt after the title's data lands, so wait for it
+    // rather than racing the rebuild.
+    await session.waitFor(
+      'Array.prototype.some.call(document.querySelectorAll("#p2 .ability option"),' +
+      ' function (o) { return o.value === "Multieye"; })');
+    // Unbound ability names are not in the stock list, so the selector could not hold
+    // them and the calculation silently ran with whatever it fell back to.
+    check('Unbound abilities are selectable', await session.eval(
+      '(function () {' +
+      '  var s = document.querySelector("#p2 .ability");' +
+      '  return JSON.stringify(["Multieye", "Portal Power", "Icy Skin", "Bellow",' +
+      '    "Sound Waves"].map(function (a) { s.value = a; return s.value === a; }));' +
+      '})()'), '[true,true,true,true,true]');
+    check('ported Unbound abilities change the result', await session.eval(
+      '(function () {' +
+      '  var gen = calc.Generations.get(8);' +
+      '  var hit = new calc.Pokemon(gen, "Blastoise", { level: 50 });' +
+      '  var d = function (ability) {' +
+      '    return JSON.stringify(calc.calculate(gen, hit,' +
+      '      new calc.Pokemon(gen, "Claydol", { level: 50, ability: ability }),' +
+      '      new calc.Move(gen, "Surf"), new calc.Field({})).damage);' +
+      '  };' +
+      '  return d("Levitate") !== d("Multieye");' +
+      '})()'), true);
+    // A set naming an item or nature no table knows used to throw, taking the page down.
+    check('an unresolvable nature does not throw', await session.eval(
+      '(function () {' +
+      '  var gen = calc.Generations.get(8);' +
+      '  try {' +
+      '    calc.calculate(gen, new calc.Pokemon(gen, "Miltank", { level: 36, nature: "72" }),' +
+      '      new calc.Pokemon(gen, "Blastoise", { level: 50 }),' +
+      '      new calc.Move(gen, "Facade"), new calc.Field({}));' +
+      '    return "ok";' +
+      '  } catch (e) { return "threw: " + e.message; }' +
+      '})()'), 'ok');
+    check('Knock Off against an unknown item does not throw', await session.eval(
+      '(function () {' +
+      '  var gen = calc.Generations.get(8);' +
+      '  try {' +
+      '    calc.calculate(gen, new calc.Pokemon(gen, "Blastoise", { level: 50 }),' +
+      '      new calc.Pokemon(gen, "Houndoom", { level: 50, item: "Not An Item" }),' +
+      '      new calc.Move(gen, "Knock Off"), new calc.Field({}));' +
+      '    return "ok";' +
+      '  } catch (e) { return "threw: " + e.message; }' +
+      '})()'), 'ok');
+    check('corrected item names resolve', await session.eval(
+      'JSON.stringify(["Houndoominite", "Kangaskhanite", "Weakness Policy", "Flyinium Z"]' +
+      '.map(function (i) { return items.indexOf(i) >= 0; }))'),
+      '[true,true,true,true]');
+    // Donor data supplies isPunch on Wicked Blow; the engine reads flags.punch.
+    check('supplied move flags reach the engine flag names', await session.eval(
+      'JSON.stringify([calc.Generations.get(8).moves.get("wickedblow").flags.punch,' +
+      ' calc.Generations.get(8).moves.get("leechfang").flags.bite])'), '[1,1]');
+
     console.log('\n# text import');
     // A real Unbound Cloud box export from the owner's playthrough
     // (docs/example_box.txt): 18 Pokemon, 17 species, nicknames, and one species

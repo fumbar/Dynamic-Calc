@@ -25,6 +25,24 @@ var UNBOUND_MOVE_ALIASES = {
     "Hidden Power (Fire?)": "Hidden Power Fire"
 };
 
+// Natures the donor states as something that is not a nature. Both donors carry
+// "72" on Miltank / Leader Mel in the Difficult tier; the intended nature is not
+// recoverable, so the set falls back to a neutral one and says so. Left as-is the
+// nature does not resolve and the calculation throws.
+var UNBOUND_NEUTRAL_NATURE = "Serious";
+
+// Mega Stones the donor names with a truncated spelling. Both donors carry the
+// typo, and the stock item table has the real names, so these are corrected rather
+// than quarantined: left alone the item does not resolve, which both loses the
+// stone and crashes the Knock Off path in calc/mechanics/gen78.js.
+var UNBOUND_ITEM_ALIASES = {
+    "Houndoomite": "Houndoominite",
+    "Kangaskhite": "Kangaskhanite",
+    "Weakmess Policy": "Weakness Policy",
+    "Flynium Z": "Flyinium Z",
+    "Necrozium Z": "Ultranecrozium Z"
+};
+
 // Unresolved move names. Blanked to the donor's own empty-slot convention rather
 // than guessed at, so the set stays usable and the gap is visible.
 //   Bad Tantrum: Pupitar, "Lvl 47 Rival 4 |Player Chose Gible|", all tiers.
@@ -62,8 +80,19 @@ function applyUnboundSetCorrections(sets) {
         }
     }
 
+    var itemsFixed = {};
+    var naturesFixed = {};
     for (var species in sets) {
         for (var setName in sets[species]) {
+            var set = sets[species][setName];
+            if (set.item && UNBOUND_ITEM_ALIASES[set.item]) {
+                itemsFixed[set.item] = UNBOUND_ITEM_ALIASES[set.item];
+                set.item = UNBOUND_ITEM_ALIASES[set.item];
+            }
+            if (set.nature && !/^[A-Za-z]+$/.test(set.nature)) {
+                naturesFixed[set.nature] = species + " / " + setName;
+                set.nature = UNBOUND_NEUTRAL_NATURE;
+            }
             var moveList = sets[species][setName].moves;
             if (!moveList) continue;
             for (var m = 0; m < moveList.length; m++) {
@@ -87,6 +116,13 @@ function applyUnboundSetCorrections(sets) {
     }
     for (var unresolved in blanked) {
         UNBOUND_NOTES.push("move left blank, no match found: '" + unresolved + "' on " + blanked[unresolved]);
+    }
+    for (var badNature in naturesFixed) {
+        UNBOUND_NOTES.push("nature '" + badNature + "' is not a nature, using " +
+            UNBOUND_NEUTRAL_NATURE + " on " + naturesFixed[badNature]);
+    }
+    for (var badItem in itemsFixed) {
+        UNBOUND_NOTES.push("item name corrected: '" + badItem + "' -> '" + itemsFixed[badItem] + "'");
     }
     return sets;
 }
@@ -121,6 +157,30 @@ function buildUnboundDataSource(donor, tier) {
         collection = donor.formatted_sets[tier];
     }
 
+    // Ability names the stock list does not carry. Without these the UI's ability
+    // selector cannot hold the set's ability, and the calculation silently runs with
+    // whatever the selector fell back to. Collected from the data rather than listed
+    // by hand, so a donor update cannot leave one behind.
+    var extraAbilities = [];
+    (function () {
+        var known = {};
+        var stock = typeof abilities !== "undefined" && abilities ? abilities : [];
+        for (var i = 0; i < stock.length; i++) known[stock[i]] = true;
+        var seen = {};
+        for (var species in collection) {
+            for (var setName in collection[species]) {
+                var ability = collection[species][setName].ability;
+                if (ability && !known[ability] && !seen[ability]) {
+                    seen[ability] = true;
+                    extraAbilities.push(ability);
+                }
+            }
+        }
+        if (extraAbilities.length) {
+            UNBOUND_NOTES.push("abilities added to the selector: " + extraAbilities.join(", "));
+        }
+    })();
+
     var payload = {
         formatted_sets: applyUnboundSetCorrections(deepCopy(collection)),
         poks: deepCopy(donor.pokedex),
@@ -133,7 +193,14 @@ function buildUnboundDataSource(donor, tier) {
         field_effects: "unbound-effects",
         // Unbound carries species the stock dex has no entry for -- Shadow-Warrior
         // is used by a trainer set -- so they must be created, not left to a URL flag.
-        custom_poks: true
+        custom_poks: true,
+        // Translate the donor's move flags to the names the engine reads: without
+        // this, Iron Fist misses Wicked Blow and a custom move has no flags at all.
+        apply_move_flags: true,
+        // Both Unbound donors apply 1.3x for the -ate abilities, where this fork
+        // defaults to the generation 7 value of 1.2x. See docs/HANDOFF.md.
+        ate_bp_mod: 5325,
+        extra_abilities: extraAbilities
     };
     payload.tier = tier;
 
@@ -156,6 +223,12 @@ function isolateWorkingTables() {
     }
     if (typeof MOVES_BY_ID !== "undefined" && MOVES_BY_ID[g]) {
         MOVES_BY_ID[g] = deepCopy(MOVES_BY_ID[g]);
+    }
+    // The ability list is appended to for titles with their own abilities, so the
+    // stock array needs the same treatment.
+    if (typeof abilities !== "undefined" && abilities) {
+        abilities = abilities.slice();
+        calc.ABILITIES[gen] = abilities;
     }
 }
 

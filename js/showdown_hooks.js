@@ -786,6 +786,23 @@ function removeEvs(sets) {
     }
 }
 
+// Base power modifier for Aerilate, Pixilate, Refrigerate and Galvanize. Left
+// undefined unless a title sets one, so other titles keep this fork's default.
+var ATE_BP_MOD
+
+// Maps the flag names title data uses onto the names calc/mechanics reads.
+var ENGINE_MOVE_FLAGS = {
+    "makesContact": "contact",
+    "isPunch": "punch",
+    "isBite": "bite",
+    "isBullet": "bullet",
+    "isSound": "sound",
+    "isPulse": "pulse",
+    "isKick": "kick",
+    "isSword": "sword",
+    "isBone": "bone"
+}
+
 function loadDataSource(data) {
 
     // Titles that ask for it get their own copies of the tables this function
@@ -840,6 +857,19 @@ function loadDataSource(data) {
     // Titles whose sets come in tiers expose the selector; the rest never see it.
     if (data["tier"]) {
         initTierControl(data["tier"])
+    }
+
+    if (data["extra_abilities"]) {
+        for (var a = 0; a < data["extra_abilities"].length; a++) {
+            if (abilities.indexOf(data["extra_abilities"][a]) === -1) {
+                abilities.push(data["extra_abilities"][a])
+            }
+        }
+        abilities.sort()
+    }
+
+    if (data["ate_bp_mod"]) {
+        ATE_BP_MOD = data["ate_bp_mod"]
     }
 
     // Field effects that only exist in one title stay hidden everywhere else.
@@ -930,6 +960,21 @@ function loadDataSource(data) {
             }
         }
 
+        // The loop above writes flags under the source's own names, which the engine
+        // never reads -- it looks for flags.punch, flags.contact and so on. Titles
+        // that ask for it get the supplied flags translated to the engine's names,
+        // honouring an explicit false. Opt-in, because switching it on everywhere
+        // would change results for titles whose move data was never checked here.
+        if (data["apply_move_flags"]) {
+            for (var sourceFlag in ENGINE_MOVE_FLAGS) {
+                if (!jsonMove.hasOwnProperty(sourceFlag)) continue
+                var engineFlag = ENGINE_MOVE_FLAGS[sourceFlag]
+                var on = jsonMove[sourceFlag] ? 1 : 0
+                MOVES_BY_ID[g][move_id]["flags"][engineFlag] = on
+                moves[move][sourceFlag] = !!jsonMove[sourceFlag]
+            }
+        }
+
 
         if (jsonMove['flags']) {
             if (jsonMove['flags']['punch']) {
@@ -956,6 +1001,16 @@ function loadDataSource(data) {
         } else {
             // custom move
             jsonMoves[move]["flags"] = {}
+
+            // A custom move's flags would otherwise be wiped along with the rest,
+            // leaving the engine with nothing to read.
+            if (data["apply_move_flags"]) {
+                for (var newFlag in ENGINE_MOVE_FLAGS) {
+                    if (jsonMoves[move][newFlag]) {
+                        jsonMoves[move]["flags"][ENGINE_MOVE_FLAGS[newFlag]] = 1
+                    }
+                }
+            }
 
             moves[move] = jsonMoves[move]
             moves[move]["bp"] = jsonMoves[move]["basePower"]

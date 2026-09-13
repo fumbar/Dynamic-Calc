@@ -27,7 +27,8 @@ Expert. The tier selector next to the title does the same thing by rewriting the
 ```
 node check/run.js         # recorded damage fixtures, effects off
 node check/mechanics.js   # each ported effect, against donor B on identical inputs
-node check/ui.js          # the real page in headless Chrome (45 checks)
+node check/ui.js          # the real page in headless Chrome (51 checks)
+node check/agreement.js <tier>   # every trainer set, this fork vs donor B
 ```
 
 No `npm install`. `check/ui.js` drives Chrome or Edge over the DevTools protocol and fails on
@@ -57,7 +58,7 @@ title only. Inverse battle was already implemented here and is reused unchanged.
 Trevenant calculates off Unbound's base Attack of 110 rather than the stock 120. Two importer
 bugs that export exposed are fixed below.
 
-## Four bugs found and fixed on the way
+## Bugs found and fixed on the way
 
 1. **No Unbound base power was being applied at all.** The donor states base power as `bp`;
    `loadDataSource()` reads `basePower`. Every Unbound move silently kept its stock value —
@@ -81,6 +82,31 @@ every title, not just Unbound:
    hardcoded slot `"My Box"`, so your second Pyroar overwrote the first. Duplicates now take
    `"My Box 2"` and so on, numbered per import so re-importing the same box does not
    accumulate.
+
+Comparing every trainer set against donor B then turned up the rest:
+
+5. **Five Unbound abilities were missing, and could not even be selected.** `Multieye`,
+   `Icy Skin`, `Portal Power`, `Bellow` and `Sound Waves` are absent from the stock ability
+   list, so the ability selector could not hold them - the calculation ran with whatever the
+   selector fell back to - and their damage effects were not implemented at all. All five are
+   ported from donor B, and every Unbound ability name is now added to the selector from the
+   data rather than a hand-written list. This accounted for 16 of the 26 disagreements.
+6. **Iron Fist missed Wicked Blow.** The donor supplies `isPunch`, but the loader wrote flags
+   under the source's own names while the engine reads `flags.punch`, so every supplied flag
+   was discarded - for every title. Fixed behind a per-title opt-in, so only Unbound's move
+   data changes here. Custom moves also had their flags wiped outright.
+7. **Two crashes from unresolvable donor data.** A set naming an item no table knows took the
+   whole calculation down on Knock Off (`Houndoomite`, `Kangaskhite`, `Weakmess Policy`,
+   `Flynium Z`, `Necrozium Z` - all truncations of real names, now corrected), and Miltank's
+   Difficult-tier Leader Mel set carries `nature: "72"`, which is not a nature and threw.
+   Both engine paths are guarded as well, because a crash is never the right answer to bad
+   data. Donor B still crashes on these, which is why its column shows four throws above.
+8. **The -ate abilities used the wrong multiplier for Unbound.** Aerilate, Pixilate,
+   Refrigerate and Galvanize apply 1.2x here (the generation 7 value) and 1.3x in *both*
+   Unbound donors. That is roughly 8% on Champion Jax's Salamence-Mega and Elite Four
+   Arabella's Sylveon, among others. Now set per title, so only Unbound moves to 1.3x.
+   **This is donor-matched, not ROM-verified** - it is the one change made on donor consensus
+   alone, and the first thing to re-check if you ever read the ROM.
 
 ## Excluded records — please read
 
@@ -115,6 +141,24 @@ among them, Shadow-Warrior, is created from the donor entry.
 
 ## Checked, and what that does and does not establish
 
+`check/agreement.js` compares **every trainer set in every tier** against donor B, running
+this fork in the real page (so `loadDataSource` has applied the title's data) and donor B on
+its own tables. Each set both attacks and defends, and every Pokemon is built from explicit
+base stats, types and weight, so a data difference cannot be mistaken for an engine one.
+
+| tier | comparisons | agree | genuine disagreements |
+|---|---|---|---|
+| Difficult | 2839 | 99.82% | 1 (4 more are donor B crashing on data this fork fixes) |
+| Expert | 3040 | 99.93% | 2 |
+| Insane | 3313 | 100.00% | 0 |
+
+Underneath that, the two data sets themselves match: species base stats and types agree
+100%, and the move data every set uses agrees 100%. Trainer sets agree on 98-99%, and every
+difference is a correction this fork applies and donor B does not.
+
+The three remaining disagreements are inherited differences between this fork's engine and
+donor B's, present before the port and not introduced by it.
+
 Each ported effect was run on a case built to discriminate it and compared with donor B on
 identical inputs — explicit base stats, types and weights, and moves whose stock base power
 matches in both engines, because donor B's stock move table carries older values and its
@@ -144,6 +188,17 @@ repeats. Everything else matches.
   generation. Unbound runs at gen 8, so this is correct here and untouched.
 - A's and donor B's parallel-speed helpers differ on paralysis in gen 7
   (`gen.num < 7` here, `gen.num != 7` there). Inherited, not introduced by this port.
+- **The three remaining disagreements with donor B**, all inherited and all left alone:
+  - *Liquid Voice* (Primarina, two sets). This fork gives it a power boost donor B does not.
+    The cause is operator precedence in `calc/mechanics/gen78.js`: an Inclement Emerald boost
+    sits outside its own `INC_EM &&` guard and leaks into every title. Liquid Voice grants no
+    power boost in the real games, so this fork is probably wrong - but the fix would change
+    Inclement Emerald and every other title, so it is reported rather than changed blind.
+  - *Multi-Attack* (Silvally, one set). This fork types the move from the user's first type;
+    donor B types it from the Memory but does not change the user's type. Neither does both,
+    which is what the real games do. Against the neutral test target the only difference is
+    STAB, so this fork lands on the right number by the wrong route.
+  - Donor B additionally crashes on the four sets whose item names this fork corrects.
 - Direct Unbound save import is still not possible; no reader for its layout exists in either
   fork. Text import is the route, and it is now checked against a real Cloud export.
 - `Zygarde-10%` has a `%` in its name, so its sprite URL is not valid percent-encoding and the

@@ -672,7 +672,7 @@ function calculateBPModsSMSS(gen, attacker, defender, move, field, desc, basePow
             (defender.named('Venomicon-Epilogue') && defender.hasItem('Vile Vial')));
     if (!resistedKnockOffDamage && defender.item && defender.item != "None") {
         var item = gen.items.get((0, util_1.toID)(defender.item));
-        resistedKnockOffDamage = !!item.megaEvolves && defender.name.includes(item.megaEvolves);
+        resistedKnockOffDamage = !!(item && item.megaEvolves) && defender.name.includes(item.megaEvolves);
     }
     if ((move.named('Facade') && attacker.hasStatus('brn', 'par', 'psn', 'tox', 'frz')) ||
         (move.named('Brine') && defender.curHP() <= defender.maxHP() / 2) ||
@@ -776,7 +776,7 @@ function calculateBPModsSMSS(gen, attacker, defender, move, field, desc, basePow
         (attacker.hasAbility('Analytic') &&
             (turnOrder !== 'first' || field.defenderSide.isSwitching)) ||
         (attacker.hasAbility('Tough Claws') && move.flags.contact) ||
-        (attacker.hasAbility('Punk Rock') && move.flags.sound) ||
+        (attacker.hasAbility('Punk Rock', 'Bellow', 'Sound Waves') && move.flags.sound) ||
         (attacker.hasAbility('Striker') && move.flags.kick) ||
         (attacker.hasAbility('Illusion') && attacker.abilityOn)) {
         bpMods.push(5325);
@@ -803,7 +803,10 @@ function calculateBPModsSMSS(gen, attacker, defender, move, field, desc, basePow
         }
     }
     if (!move.isMax && hasAteAbilityTypeChange) {
-        bpMods.push(4915);
+        // 4915 is 1.2x, the generation 7 onward value this fork uses by default.
+        // A title may set ATE_BP_MOD to its own value: both Unbound donors use 5325
+        // (1.3x, the generation 6 value). Donor-matched, not verified against the ROM.
+        bpMods.push(typeof ATE_BP_MOD !== 'undefined' && ATE_BP_MOD ? ATE_BP_MOD : 4915);
     }
     if ((attacker.hasAbility('Reckless') && (move.recoil || move.hasCrashDamage)) ||
         (attacker.hasAbility('Liquid Voice') && move.flags.sound) ||
@@ -1112,7 +1115,7 @@ function calculateFinalModsSMSS(gen, attacker, defender, move, field, desc, isCr
     if (defender.isDynamaxed && move.named('Dynamax Cannon', 'Behemoth Blade', 'Behemoth Bash')) {
         finalMods.push(8192);
     }
-    if (defender.hasAbility('Multiscale', 'Shadow Shield', 'Blubber Defense') &&
+    if (defender.hasAbility('Multiscale', 'Shadow Shield', 'Blubber Defense', 'Multieye') &&
         defender.curHP() === defender.maxHP() &&
         !field.defenderSide.isSR && (!field.defenderSide.spikes || defender.hasType('Flying')) &&
         !attacker.hasAbility('Parental Bond (Child)', 'ORAORAORAORA (Child)')) {
@@ -1129,8 +1132,8 @@ function calculateFinalModsSMSS(gen, attacker, defender, move, field, desc, isCr
         finalMods.push(2048);
         desc.defenderAbility = defender.ability;
     }
-    else if ((defender.hasAbility('Punk Rock') && move.flags.sound) ||
-        (defender.hasAbility('Ice Scales') && move.category === 'Special')) {
+    else if ((defender.hasAbility('Punk Rock', 'Bellow', 'Sound Waves') && move.flags.sound) ||
+        (defender.hasAbility('Ice Scales', 'Icy Skin', 'Dusty Scales') && move.category === 'Special')) {
         finalMods.push(2048);
         desc.defenderAbility = defender.ability;
     }
@@ -1139,6 +1142,11 @@ function calculateFinalModsSMSS(gen, attacker, defender, move, field, desc, isCr
         desc.defenderAbility = defender.ability;
     }
     else if (defender.hasAbility('Solid Rock', 'Filter', 'Prism Armor') && typeEffectiveness > 1) {
+        finalMods.push(3072);
+        desc.defenderAbility = defender.ability;
+    }
+    // Unbound's Portal Power: three quarters damage from non-contact moves.
+    if (defender.hasAbility('Portal Power') && !move.flags.contact) {
         finalMods.push(3072);
         desc.defenderAbility = defender.ability;
     }
