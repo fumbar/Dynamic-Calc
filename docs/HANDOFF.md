@@ -2,7 +2,8 @@
 
 Written for: the project owner, and whoever picks the branch up next.
 
-Branch `unbound-merge` in `dynamic-calc-merge-opus`, three commits on top of `1b8da408`.
+Branch `dynamic-calc-merge-opus`, four commits on top of `1b8da408`. Named for the working
+copy at the owner's request; the planning documents and ADR 0001 call it `unbound-merge`.
 Scope follows [the revised plan](IMPLEMENTATION-PLAN-REVISED.md). Switch-in prediction and
 the design pass are deliberately not in this build.
 
