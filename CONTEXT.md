@@ -39,6 +39,20 @@ _Avoid_: swap-out prediction, switch-out prediction, bait order
 The ranking a switch-in prediction produces for each candidate Pokémon on the enemy team.
 _Avoid_: switch score, threat score
 
+### Presentation
+
+**Sprite style**:
+One of the two selectable sets of Pokémon images — `newhd` at 300x300 or `pokesprite` at
+40x30 — chosen per viewer and held in `localStorage.boxspriteindex`. Which one is active
+decides whether a box tile upscales or downscales its image, so rendering rules have to be
+scoped to the style rather than applied to every tile.
+_Avoid_: sprite pack, icon set, sprite size
+
+**Geometry layer**:
+`css/layout-b.css`, loaded after `main.css` on the calculator page and carrying only
+widths, type scale and spacing, never colour, so the palette underneath stays in force.
+_Avoid_: theme, skin, stylesheet override
+
 ### Accuracy
 
 **Ground truth**:

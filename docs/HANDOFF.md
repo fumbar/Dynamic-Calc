@@ -142,12 +142,12 @@ Roughly in priority order.
 These are follow-up options after trying the build, not authorization to begin another
 verification project. The owner accepted donor matching for the first build.
 
-1. **Try the first build, then gather design feedback.** The owner deferred design work
-   until hands-on use. Donor B sizes in `em` with a `100em` wrapper,
-   where this fork has `min-width: 1256px` on the wrapper and two `min-width: 1540px`
-   panels, which is what forces the spread. Deleting those values is not proof the page
-   fits; the controls and team rails have to be inspected at the owner's real window width,
-   which has not been asked for yet. Keep the team previews.
+1. **Design feedback on the new look.** The first pass is done and pushed; see "The look"
+   below. What this item used to say was wrong, and is corrected there: the `min-width`
+   values never forced the spread, because the `width <= 1540px` media query cancels them
+   and the page already fit at the owner's width. What is left is judgement rather than
+   measurement — the field-effect labels, the party rail density, and anything not in the
+   measured table. The team previews are kept.
 2. **Switch-in prediction**, deferred to a follow-up release by the owner. Section 7 of the
    revised plan has the approach: reuse donor C's `get_next_in_cfru()` and prefer this
    fork's `js/switch_prediction.js`.
@@ -176,6 +176,58 @@ http://localhost:8000/index.html?data=unbound&gen=8&dmgGen=8&types=6
 
 Add `&m=difficult` or `&m=insane` for the other tiers. Absent or unrecognised values load
 Expert. The tier selector next to the title does the same thing by rewriting the URL.
+
+## The look
+
+`css/layout-b.css` loads last, on `index.html` only, so the mastersheet, planner and
+fragsheet keep their own styling. It carries **donor B's geometry over this fork's dark
+palette** and declares no colour anywhere. An earlier commit did the opposite — donor B's
+colours and none of its geometry — and was reverted.
+
+The whole size difference was one declaration. Both sheets already set `10pt Verdana` on
+`html, body`; this fork then set `.panel` to 18px, inflating every em-based width inside
+the panels by about 35%. The form controls carry their own explicit sizes on top of that
+(a bare `input { font-size: 18px }` among others) and needed handling separately.
+
+Measured against donor B served locally, both in the same headless browser at 1276px:
+
+| | before | now | donor B |
+|---|---|---|---|
+| panel font | 18px | 13.33px | 13.33px |
+| `.poke-info` | 540px | 400px | 400px (30em) |
+| `.field-info` | 510px | 367px | 367px (27.5em) |
+| number input | 18px, 27x60 | 13.3px, 19x46 | 13.3px, 21x48 |
+| select | 16px, 21x79 | 13.3px, 19x70 | 13.3px, 19x70 |
+| stat row pitch | 33px | 21px | 23px |
+| field buttons | h40 | h23 | h23 |
+
+Four constants in `css/main.css` were sized for the old 18px scale and broke when it
+shrank. Check these first if you change the type scale again:
+
+| constant | what it did |
+|---|---|
+| `.poke-sprite` `calc(100% - 430px)` | goes negative at 30em, so the sprites vanish |
+| `.right-table` `height: 205px` | 62px of dead space under a 143px table, dropping Pokemon 2 out of line with Pokemon 1 |
+| `.btn-xxxwide` `height/line-height: 30px` | donor B sizes that class by width alone |
+| `#player-tags` `top: 71px` | collides with the Type row once the rows above it shrink |
+
+The `width <= 1180px` reflow (`.panel-wrapper` wraps and `.panel-mid` takes `order: 2`, so
+Field drops below the pair) had never worked: the two Pokemon columns are sized
+`calc(50vw - 10px)` against the viewport while the wrapper adds `padding: 0 1em`, so the
+pair overflowed the content box by a few pixels and all three stacked instead. They are
+sized against the wrapper now. That block is also a touch-scale enlargement — 40-60px
+rows, 18-24px type — which is neutralised so density holds at every width.
+
+**Sprites.** `boxSprites = ["newhd", "pokesprite"]`, two selectable sets at 300x300 and
+40x30. The same box tiles therefore *downscale* one and *upscale* the other, so
+`image-rendering: pixelated` is right for `pokesprite` and aliases badly on `newhd`. The
+rule is scoped by the style class each tile carries. The panel sprite (`.poke-sprite`) is
+left smoothed, by the owner's preference. The held-item icon takes `pointer-events: none`
+because the click handler sits on the sprite underneath it.
+
+**No check covers the `newhd` path.** A blanket pixelated rule shipped and passed all 51
+UI checks; the owner caught it by eye. Treat the suites as covering behaviour, not
+appearance.
 
 ## Checks
 
@@ -426,9 +478,14 @@ base stats, types and weight, so a data difference cannot be mistaken for an eng
 
 | tier | comparisons | agree | ROM-backed differences | unexplained |
 |---|---|---|---|---|
-| Difficult | 2839 | 99.26% | 16 | 5 (4 are donor B crashing) |
+| Difficult | 2839 | 99.30% | 16 | 4 (all four are donor B crashing) |
 | Expert | 3040 | 99.57% | 11 | 2 |
 | Insane | 3313 | 99.64% | 12 | 0 |
+
+The Difficult row was re-run on 2026-09-13 and reads 99.30% with 4 unexplained, where this
+table previously recorded 99.26% with 5. One real disagreement was resolved between that
+figure being written and the integration commit. **Expert and Insane have not been re-run
+since, so assume they carry the same staleness.**
 
 Agreement is *lower* than it was before the ROM check, deliberately. Where the cartridge
 says both donors are wrong, this calculator follows the cartridge.
