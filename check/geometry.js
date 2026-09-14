@@ -70,6 +70,17 @@ const PROBE = `(() => {
       return { font: getComputedStyle(e).fontSize, w: Math.round(r.width), h: Math.round(r.height) }; })(),
     statPitch:   rows.length === 3 ? rows[2] - rows[1] : null,
     fieldBtnH:   fieldBtn ? Math.round(fieldBtn.getBoundingClientRect().height) : null,
+    // The four Unbound field effects as a 2x2: two rows, two even cells each, and
+    // one height whether the label runs to one line or two.
+    effects:     (() => {
+      const cells = Array.from(document.querySelectorAll('.unbound-effects label.btn'));
+      if (cells.length !== 4) return null;
+      const r = cells.map(e => e.getBoundingClientRect());
+      return { rows: [...new Set(r.map(b => Math.round(b.top)))].length,
+        columns: [...new Set(r.map(b => Math.round(b.left)))].length,
+        heights: [...new Set(r.map(b => Math.round(b.height)))].length,
+        rowWidths: [Math.round(r[1].right - r[0].left), Math.round(r[3].right - r[2].left)] };
+    })(),
     spriteRender: q('img.poke-sprite') ? getComputedStyle(q('img.poke-sprite')).imageRendering : null,
     tileRender:  tile ? getComputedStyle(tile).imageRendering : null,
     scrollW:     document.documentElement.scrollWidth,
@@ -154,6 +165,12 @@ async function main() {
       check('panel sprite is left smoothed', wide.spriteRender, 'auto');
       check('pokesprite box tile is pixelated', wide.tileRender, 'pixelated',
         '(scoped to the 40x30 set; newhd is downscaled and must stay smooth)');
+
+      console.log('\n# the Unbound field effects are an even 2x2');
+      check('two rows of two', [wide.effects.rows, wide.effects.columns], [2, 2]);
+      check('every cell the same height', wide.effects.heights, 1,
+        '(a two-line label used to sit its row six pixels out of true)');
+      check('both rows the same width', wide.effects.rowWidths[0], wide.effects.rowWidths[1]);
 
       console.log('\n# no horizontal scroll, and the narrow reflow');
       check('page fits at ' + WIDE + 'px', wide.scrollW, wide.clientW);
