@@ -155,7 +155,10 @@ styles, not `newhd` box tiles or rendered-image appearance.
   properties still use legacy truthy checks. These constraints remain open.
 - Unbound's Big Mo and Vicious Sandstorm speed helpers target its supported gen-8 path;
   the duplicated lower-generation helper is not an additional supported configuration.
-- `Zygarde-10%` has an inherited sprite URL percent-encoding problem. Cosmetic only.
+- Sprite filenames are percent-encoded at every construction site, and the species-derived
+  name drops `%` to match the assets, so `Zygarde-10%` resolves in all four sprite
+  directories. `img/pokesprite/zygarde-10%.png` is now unreferenced; the `%`-free file
+  beside it is a different image of the same forme.
 
 ## Local references and guardrails
 

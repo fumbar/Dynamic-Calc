@@ -728,6 +728,25 @@ table td {
     top: 14px;
 }
 
+/* The box rail wraps each tile in one of these so the held-item icon has a
+ * positioned box to sit in. It deliberately is not .trainer-pok-container: that
+ * class carries the party and trainer rails' column layout with it. */
+.box-pok {
+    position: relative;
+    display: inline-flex;
+}
+
+/* A box tile is roughly a third of the area of a party tile, so its icon is
+ * scaled to match and tucked into the corner instead of sitting over the
+ * middle of the sprite. */
+.trainer-pok-item.box-item {
+    width: 20px;
+    left: auto;
+    right: 0;
+    top: auto;
+    bottom: 0;
+}
+
 .player-party .trainer-pok-container {
     width: calc(16.66% - 3px);
     margin: 0;

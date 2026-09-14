@@ -227,13 +227,13 @@ function get_custom_trainer_names() {
 
 function sort_box_by_name(aToZ = true) {
     var box = $('.player-poks'),
-    mons = box.children('.trainer-pok');
+    mons = box.children('.box-pok');
  
     mons.sort(function(a,b){
-        mon1_id = a.getAttribute('data-id');
+        mon1_id = a.querySelector('.trainer-pok').getAttribute('data-id');
         mon1_species = mon1_id.split(" (")[0];
 
-        mon2_id = b.getAttribute('data-id');
+        mon2_id = b.querySelector('.trainer-pok').getAttribute('data-id');
         mon2_species = mon2_id.split(" (")[0];
 
         if(mon1_species > mon2_species) {
@@ -257,8 +257,19 @@ function get_box() {
     for (i in names) {
         if (names[i].includes("My Box")) {
             box.push(names[i].split("[")[0])
-            var pok_name = names[i].split(" (")[0].toLowerCase().replace(" ","-").replace(".","").replace(".","").replace("’","").replace(":","-")
-            var pok = `<img class="trainer-pok left-side ${sprite_style}" src="./img/${sprite_style}/${pok_name}.png" data-id="${names[i].split("[")[0]}">`
+            var pok_name = names[i].split(" (")[0].toLowerCase().replace(" ","-").replace(".","").replace(".","").replace("’","").replace(":","-").replace("%","")
+            var data_id = names[i].split("[")[0]
+            var selected = importedSetIdentity(data_id)
+            var set_data = setdex[selected.species] && setdex[selected.species][selected.slot]
+            // The tile needs a positioned box of its own for the held-item icon to sit in.
+            // .trainer-pok-container is the party and trainer rails' wrapper and carries
+            // their column layout with it, so the box rail uses its own class.
+            var pok = `<span class="box-pok"><img class="trainer-pok left-side ${sprite_style}" src="./img/${sprite_style}/${encodeURIComponent(pok_name)}.png" data-id="${data_id}">`
+            if (set_data && set_data['item']) {
+                var item_name = set_data['item'].toLowerCase().replace(/ /g, "_").replace("'", "")
+                pok += `<img class="trainer-pok-item box-item" src="./img/items/${item_name}.png">`
+            }
+            pok += `</span>`
             box_html += pok
         }   
     }
@@ -608,13 +619,13 @@ function displayParty() {
         for (i in currentParty) {
             species_name = currentParty[i]
 
-            var sprite_name = species_name.toLowerCase().replace(" ","-").replace(".","").replace("’","").replace(":","-")
+            var sprite_name = species_name.toLowerCase().replace(" ","-").replace(".","").replace("’","").replace(":","-").replace("%","")
             var set_data = setdex[species_name]["My Box"]
             var data_id = species_name + " (My Box)"
 
 
             var pok = `<div class="trainer-pok-container">
-                <img class="trainer-pok left-side ${sprite_style}" src="./img/${sprite_style}/${sprite_name}.png" data-id="${data_id}">
+                <img class="trainer-pok left-side ${sprite_style}" src="./img/${sprite_style}/${encodeURIComponent(sprite_name)}.png" data-id="${data_id}">
                 <div class="bp-info">${abv(set_data['moves'][0].replace("Hidden Power", "HP"))}</div>
                 <div class="bp-info">${abv(set_data['moves'][1].replace("Hidden Power", "HP"))}</div>
                 <div class="bp-info">${abv(set_data['moves'][2].replace("Hidden Power", "HP"))}</div>
@@ -1710,16 +1721,16 @@ $(document).ready(function() {
         var data_id = $(this).attr('data-id')
         var selected = importedSetIdentity(data_id)
         var species_name = selected.species
-        var sprite_name = species_name.toLowerCase().replace(" ","-").replace(".","").replace("’","").replace(":","-")
+        var sprite_name = species_name.toLowerCase().replace(" ","-").replace(".","").replace("’","").replace(":","-").replace("%","")
         var set_data = customSets[species_name] && customSets[species_name][selected.slot]
         if (!set_data) return
         set_data['moves'] = padArray(set_data['moves'], 4, "-")
 
         var pok = `<div class="trainer-pok-container">
-            <img class="trainer-pok left-side ${sprite_style}" src="./img/${sprite_style}/${sprite_name}.png" data-id="${data_id}">`
+            <img class="trainer-pok left-side ${sprite_style}" src="./img/${sprite_style}/${encodeURIComponent(sprite_name)}.png" data-id="${data_id}">`
 
         if (set_data['item']) {
-            item_name = set_data['item'].toLowerCase().replace(" ", "_").replace("'", "") 
+            item_name = set_data['item'].toLowerCase().replace(/ /g, "_").replace("'", "") 
             pok += `<img class="trainer-pok-item" src="./img/items/${item_name}.png">`
         }
             

@@ -538,7 +538,7 @@ function refresh_next_in() {
 		if (next_poks[i][0].includes($('input.opposing').val()) && noSwitch != "1"){
 			continue
 		}
-		var pok_name = next_poks[i][0].split(" (")[0].toLowerCase().replace(" ","-").replace(".","").replace("’","").replace(":","-")
+		var pok_name = next_poks[i][0].split(" (")[0].toLowerCase().replace(" ","-").replace(".","").replace("’","").replace(":","-").replace("%","")
 
 		if (pok_name.includes("galarian-")) {
 			pok_name = pok_name.split("galarian-")[1] +  "-galar"
@@ -577,7 +577,7 @@ function refresh_next_in() {
 		}
 
 		var pok = `<div class="trainer-pok-container no-switch-${noSwitch}">
-			<img class="trainer-pok right-side ${sprite_style} ${highlight} ${isFainted} ${isLead}" src="./img/${sprite_style}/${pok_name.replace("sn-s", "sion").replace(/-s$/, "")}.png" data-id="${dataID}">`
+			<img class="trainer-pok right-side ${sprite_style} ${highlight} ${isFainted} ${isLead}" src="./img/${sprite_style}/${encodeURIComponent(pok_name.replace("sn-s", "sion").replace(/-s$/, ""))}.png" data-id="${dataID}">`
 
 
 		var species = next_poks[i][0].split(" (")[0]
@@ -585,7 +585,7 @@ function refresh_next_in() {
 		var item = setdex[species][set_name]["item"]
 
 		if (item && item != "-" && !item.toLowerCase().includes("none")) {
-			item_name = item.toLowerCase().replace(" ", "_").replace("'","") 
+			item_name = item.toLowerCase().replace(/ /g, "_").replace("'","") 
             pok += `<img class="trainer-pok-item" src="./img/items/${item_name}.png">`
 		}
 
@@ -701,7 +701,7 @@ $(".set-selector").change(function () {
 		} else {
 			$('#trainer-sprite').hide()
 		}
-		var pokesprite = pokemonName.toLowerCase().replace(" ", "-").replace(".","").replace("’","").replace(":","-")
+		var pokesprite = pokemonName.toLowerCase().replace(" ", "-").replace(".","").replace("’","").replace(":","-").replace("%","")
 
 		if (pokesprite.includes("galarian-")) {
 			pokesprite = pokesprite.split("galarian-")[1] +  "-galar"
@@ -716,7 +716,7 @@ $(".set-selector").change(function () {
 		}
 
 
-		$('#p2 .poke-sprite').attr('src', `./img/${trainerSprites}/${pokesprite.replace("-glitched", "").replace(/-S$/, "").replace("sn-s", "sion")}.${suffix}`)
+		$('#p2 .poke-sprite').attr('src', `./img/${trainerSprites}/${encodeURIComponent(pokesprite.replace("-glitched", "").replace(/-S$/, "").replace("sn-s", "sion"))}.${suffix}`)
 
 		if ($('#player-poks-filter:visible').length > 0) {
 	       box_rolls() 
@@ -724,9 +724,9 @@ $(".set-selector").change(function () {
 
 	} else {
 		if (SETDEX_BW) {
-			var pokesprite = pokemonName.toLowerCase().replace(" ", "-").replace(".","").replace("’","")
+			var pokesprite = pokemonName.toLowerCase().replace(" ", "-").replace(".","").replace("’","").replace("%","")
 			
-			$('#p1 .poke-sprite').attr('src', `./img/${playerSprites}/${pokesprite}.${suffix}`)
+			$('#p1 .poke-sprite').attr('src', `./img/${playerSprites}/${encodeURIComponent(pokesprite)}.${suffix}`)
 
 
 
