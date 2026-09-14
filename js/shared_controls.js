@@ -604,7 +604,9 @@ function refresh_next_in() {
 }
 
 
-$('#p1 .boost, #statusL1, #p1 .percent-hp').blur(function() {
+// The rail's move scoring reads the left side's typing, ability, status and HP, so a
+// change to any of them can move the ranking and the highlighted move.
+$('#p1 .boost, #statusL1, #p1 .percent-hp, #abilityL1, #p1 .type1, #p1 .type2').blur(function() {
 	refresh_next_in()	
 })
 

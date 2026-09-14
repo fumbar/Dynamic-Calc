@@ -19,13 +19,16 @@ function get_next_in() {
     var player_type1 = $('.type1').first().val()
     var player_type2 = $('.type2').first().val() 
     
+    // What the scoring below reads off the left-side Pokemon. These are plain
+    // mechanics rather than anything title-specific, so every title gets them.
+    var immunities = {"Dry Skin": "Water", "Flash Fire": "Fire", "Levitate": "Ground", "Sap Sipper": "Grass", "Motor Drive": "Electric", "Lightning Rod": "Electric", "Storm Drain": "Water", "Volt Absorb": "Electric", "Water Absorb": "Water"}
+    var player_status = $("#statusL1").val()
+    var player_hp = parseInt($("#p1").find(".percent-hp").val())
+    var player_ability = $("#abilityL1").val()
+
     if (TITLE == "Cascade White 2") {
         var weather = $('#weather-bar').find('input:checked')[0].value
         var weathers = {"Sun": "Fire", "Hail": "Ice", "Sand": "Rock", "Rain": "Water"}
-        var immunities = {"Dry Skin": "Water", "Flash Fire": "Fire", "Levitate": "Ground", "Sap Sipper": "Grass", "Motor Drive": "Electric", "Storm Drain": "Water", "Volt Absorb": "Electric", "Water Absorb": "Water"}
-        var player_status = $("#statusL1").val()
-        var player_hp = parseInt($("#p1").find(".percent-hp").val())
-        var player_ability = $("#abilityL1").val()
     }
 
     if (player_type2 == ""){
@@ -63,31 +66,41 @@ function get_next_in() {
             }
 
             
+            if (pok_data["ability"] == "Technician" && mov_bp <= 60) {
+                mov_bp = mov_bp * 1.5
+            }
+
+            if (types[0] == mov_data["type"] || types[1] == mov_data["type"]) {
+                mov_bp = mov_bp * 1.5
+            }
+
+            if (pok_data["moves"][j] == "Acrobatics" && (pok_data["item"] == "-" || pok_data["item"] == "Flying Gem")) {
+                mov_bp = mov_bp * 2
+            }
+
+            else if (player_status != "Healthy" && (pok_data["moves"][j] == "Hex" || pok_data["moves"][j] == "Barb Barrage" || pok_data["moves"][j] == "Infernal Parade")) {
+                mov_bp = mov_bp * 2
+            }
+
+            else if (player_status == "Asleep" && (pok_data["moves"][j] == "Dream Eater" || pok_data["moves"][j] == "Wake-Up Slap")) {
+                mov_bp = mov_bp * 2
+            }
+
+            else if (pok_data["moves"][j] == "Brine" && player_hp <= 50) {
+                mov_bp = mov_bp * 2
+            }
+
+            else if (pok_data["moves"][j] == "Explosion" || pok_data["moves"][j] == "Self-Destruct") {
+                mov_bp = 0
+            }
+
+            // Cascade White 2 keeps these three. Beat Up is not a status-conditional
+            // move, Pay Day does not always crit, and the always-crit pair is doubled
+            // here, which is the generation 5 crit multiplier rather than 1.5. Weather
+            // Ball stays with them because the weather read above takes the first of
+            // two checked inputs on this page, which has not been resolved.
             if (TITLE == "Cascade White 2") {
-                
-                if (pok_data["ability"] == "Technician" && mov_bp <= 60) {
-                    mov_bp = mov_bp * 1.5
-                }
-
-
-
-                if (types[0] == mov_data["type"] || types[1] == mov_data["type"]) {
-                    mov_bp = mov_bp * 1.5
-                }
-
-                if (pok_data["moves"][j] == "Acrobatics" && (pok_data["item"] == "-" || pok_data["item"] == "Flying Gem")) {
-                    mov_bp = mov_bp * 2
-                }
-
-                else if (player_status != "Healthy" && (pok_data["moves"][j] == "Hex" || pok_data["moves"][j] == "Barb Barrage" || pok_data["moves"][j] == "Infernal Parade" || pok_data["moves"][j] == "Beat Up")) {
-                    mov_bp = mov_bp * 2
-                }
-
-                else if (player_status == "Asleep" && (pok_data["moves"][j] == "Dream Eater" || pok_data["moves"][j] == "Wake-Up Slap")) {
-                    mov_bp = mov_bp * 2
-                }
-
-                else if (pok_data["moves"][j] == "Brine" && player_hp <= 50) {
+                if (player_status != "Healthy" && pok_data["moves"][j] == "Beat Up") {
                     mov_bp = mov_bp * 2
                 }
 
@@ -99,28 +112,25 @@ function get_next_in() {
                     mov_bp = mov_bp * 2
                     mov_data["type"] = weathers[weather]
                 }
-                else if (pok_data["moves"][j] == "Explosion" || pok_data["moves"][j] == "Self-Destruct") {
+            }
+
+            if (immunities[player_ability]) {
+                if (mov_data["type"] == immunities[player_ability]) {
                     mov_bp = 0
                 }
+            }
 
-                if (immunities[player_ability]) {
-                    if (mov_data["type"] == immunities[player_ability]) {
-                        mov_bp = 0
-                    }
+            if (player_ability == "Soundproof") {
+                if (mov_data.isSound) {
+                    mov_bp = 0   
                 }
+            }
 
-                if (player_ability == "Soundproof") {
-                    if (mov_data.isSound) {
-                        mov_bp = 0   
-                    }
-                }
-
-                if (mov_data.multihit) {
-                    if (pok_data["ability"] == "Skill Link") {
-                        mov_bp = mov_bp * mov_data.multihit[1]
-                    } else {
-                         mov_bp = mov_bp * mov_data.multihit[0]
-                    }
+            if (mov_data.multihit) {
+                if (pok_data["ability"] == "Skill Link") {
+                    mov_bp = mov_bp * mov_data.multihit[1]
+                } else {
+                     mov_bp = mov_bp * mov_data.multihit[0]
                 }
             }
 
@@ -129,6 +139,10 @@ function get_next_in() {
             }
 
             var bp = mov_bp * type_info[mov_data["type"]]
+
+            if (player_ability == "Wonder Guard" && type_info[mov_data["type"]] <= 1) {
+                bp = 0
+            }
 
             
             if (TITLE == "Cascade White 2") {
@@ -149,6 +163,14 @@ function get_next_in() {
 
             }
         }
+        // Ties append to strongest_move, so a Pokemon whose moves all score zero --
+        // every move a status move, or the lot of them zeroed by an immunity -- ends up
+        // naming all of them and the rail paints every move red. Nothing threatens, so
+        // nothing should be marked.
+        if (strongest_move_bp == 0) {
+            strongest_move = "None"
+        }
+
         ranked_trainer_poks.push([trainer_poks[i], strongest_move_bp, strongest_move, sub_index, pok_data["moves"]])
     }
 

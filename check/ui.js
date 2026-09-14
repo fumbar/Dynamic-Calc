@@ -398,6 +398,57 @@ async function main() {
       'JSON.stringify([moves["Hydro Pump"].bp, moves["Aura Sphere"].bp,' +
       ' moves["Surf"].bp, moves["Sucker Punch"].bp])'), '[120,90,95,70]');
 
+    console.log('\n# switch-in move scoring');
+    // The opposing rail marks each Pokemon's most threatening move against the left
+    // side in red (data-strong). That score was base power times type effectiveness
+    // for every title except Cascade White 2, which kept STAB, ability immunities and
+    // the situational doublings to itself; those are plain mechanics and now apply
+    // everywhere. Selecting one team member shows the rest of that trainer's team, so
+    // each tile under test belongs to a team mate of the selected set.
+    const railMove = species =>
+      '(function () {' +
+      '  var tile = $(".trainer-pok-list.opposing .trainer-pok-container").filter(function () {' +
+      '    return ($(this).find(".trainer-pok").attr("data-id") || "").indexOf(' +
+           JSON.stringify(species) + ') === 0;' +
+      '  }).first();' +
+      '  if (!tile.length) return "tile not found";' +
+      '  return tile.find(".bp-info[data-strong=\\"true\\"]").map(function () {' +
+      '    return $(this).text().trim(); }).get().join(", ");' +
+      '})()';
+    const leftSide = (type, ability) =>
+      '$(".type1").first().val(' + JSON.stringify(type) + ').change();' +
+      '$("#abilityL1").val(' + JSON.stringify(ability) + ').change(); 1';
+    const selectOpposing = set =>
+      '$("input.opposing.set-selector").val(' + JSON.stringify(set) + ').change(); 1';
+
+    await open(UNBOUND);
+    // A Normal type takes all of Absol's moves at 1x, so STAB alone decides: Knock Off
+    // is 65 against Psycho Cut's 70 and only wins once its Dark STAB counts.
+    await session.eval(leftSide('Normal', ''));
+    await session.eval(selectOpposing('Liepard (Lvl 26 Leader Vega)'));
+    await session.waitFor(railMove('Absol') + ' !== "tile not found"');
+    check('STAB decides which move is flagged',
+      await session.eval(railMove('Absol')), 'Knock Off');
+
+    // Levitate zeroes Flygon's Earthquake, 100 before STAB, and leaves Dragon Claw at
+    // 80. Both are 1x against a Normal type.
+    await session.eval(leftSide('Normal', 'Levitate'));
+    await session.eval(selectOpposing('Volcarona (Lvl 62 Leader Benjamin)'));
+    await session.waitFor(railMove('Flygon') + ' !== "tile not found"');
+    check('an immunity on the left side moves the flag',
+      await session.eval(railMove('Flygon')), 'Dragon Claw');
+    // Forretress's four moves all score zero. Ties append, so the whole set used to be
+    // named as the strongest move and every one of them went red.
+    check('nothing is flagged when nothing threatens',
+      await session.eval(railMove('Forretress')), '');
+
+    // The score reads the left side's typing, ability, status and HP, so the rail has
+    // to be rebuilt when one of them changes.
+    await session.eval('$("#abilityL1").val("").change().blur(); 1');
+    await session.waitFor(railMove('Flygon') + ' === "Earthquake"');
+    check('the rail follows a change to the left side',
+      await session.eval(railMove('Flygon')), 'Earthquake');
+
     console.log('\n# text import');
     // A real Unbound Cloud box export from the owner's playthrough
     // (docs/example_box.txt): 18 Pokemon, 17 species, nicknames, and one species

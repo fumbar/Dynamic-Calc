@@ -68,6 +68,15 @@ the verification route for this fork.
 - Other hostnames, including LAN addresses and deployed sites, retain inherited routes
   and redirects for other titles. Same-origin hosted navigation is not implemented or
   verified. Shared storage belongs to the origin; external calculators do not receive it.
+- The opposing rail ranks a trainer's remaining team by each Pokemon's best move against
+  the left side and marks that move in red. The score is base power times type
+  effectiveness, plus STAB, Technician, ability immunities, Soundproof, multi-hit counts
+  and the situational doublings (Acrobatics, Hex, Brine, Dream Eater, Wake-Up Slap);
+  Explosion and Self-Destruct score zero. It is a ranking heuristic, not a damage calc:
+  no stats, defenses, items or boosts. Beat Up, the always-crit moves and Weather Ball
+  stay behind the Cascade White 2 gate, the first two because they are wrong as written
+  and the third because the weather read there takes the first of two checked inputs.
+  Unbound switch-in ordering itself is still unverified against the game.
 - Text import is the Unbound workflow. `docs/example_box.txt` is the owner's real Cloud
   export: 18 Pokémon, 17 species, nicknames, and two Pyroar. Duplicate species use numbered
   `My Box` slots. Existing save readers for other titles remain; Unbound's save control is hidden.
@@ -100,7 +109,7 @@ Run relevant checks, then stop unless a failure or concrete concern warrants mor
 | Command | Scope / prerequisites |
 |---|---|
 | `node check/run.js` | Six recorded baseline damage cases; Node only |
-| `node check/ui.js` | Browser: tiers, restoration, actual local dropdown navigation, box retention, data seams, effects, Cloud import |
+| `node check/ui.js` | Browser: tiers, restoration, actual local dropdown navigation, box retention, data seams, effects, switch-in move scoring, Cloud import |
 | `node check/review.js` | Browser and donor B: duplicate box actions, Camomons, weather, Liquid Voice |
 | `node check/mechanics.js` | Node and donor B: discriminating cases for ported effects |
 | `node check/geometry.js` | Browser and donor B: computed sizes/styles at 1276px and 1126px |
