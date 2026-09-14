@@ -426,25 +426,34 @@ input {
     display: none !important;
 }
 
+/* The sprite is an overlay in the panel's top-right corner. Its size is one
+ * variable so the space the other overlays and the top field group leave for it
+ * stays in step with it, and so narrow panels can shrink it in one place. */
+.poke-info {
+    --poke-sprite-size: 150px;
+    --poke-sprite-top: 80px;
+}
+
 .poke-sprite { 
     position: absolute;
-    max-width: calc(100% - 430px);
     right: 13px;
-    top: 80px;
+    top: var(--poke-sprite-top);
 /*    background: rgba(255,255,255,0.1);*/
     border-bottom-left-radius: 10px;
-    height: 96px;
+    height: var(--poke-sprite-size);
+    width: var(--poke-sprite-size);
+    object-fit: contain;
     background-size: cover;
     background-repeat: no-repeat;
     border-radius:  20px;
-    padding: 20px;
+    padding: 0px;
     z-index:  12;
 }
 
 .frag-text, .unfrag-text {
     color: #1abc9c;
     position: absolute;
-    top: 190px;
+    top: calc(var(--poke-sprite-top) + var(--poke-sprite-size) + 14px);
     right: 13px;
     width: 96px;
     text-align: center;
@@ -453,7 +462,7 @@ input {
 
 .frag-counter {
     position: absolute;
-    top: 220px;
+    top: calc(var(--poke-sprite-top) + var(--poke-sprite-size) + 44px);
     right: 13px;
     width: 96px;
     text-align: right;
@@ -1148,6 +1157,13 @@ th {
     padding:  0px 12px;
 }
 
+/* The sprite overlays this group, so the group has to be at least as tall as
+ * the part of the sprite that hangs below its own top edge -- otherwise the
+ * stat table underneath runs behind the sprite. */
+.info-group.top {
+    min-height: calc(var(--poke-sprite-size) - 13px);
+}
+
 .move4 {
     margin-bottom: 20px;
 }
@@ -1736,12 +1752,6 @@ table.field {
     min-width: 0px;
   }
 
-  .poke-sprite {
-    height: 60px;
-    max-width: initial;
-    top: 120px;
-  }
-
   .wrapper {
     width: calc(100vw - 20px);
     min-width: 0px;
@@ -1812,6 +1822,18 @@ table.field {
 
 @media (width <= 1180px) {
 
+    /* Below this breakpoint the panels are half the viewport rather than a
+     * fixed 400px, so the corner the sprite sits in shrinks with the window.
+     * The field rows beside it need ~241px, hence the offset. */
+    /* Two columns: #player-tags (Save / Add to Party / Met / Frags) is absolutely
+     * positioned above the fields, so it runs through the corner the sprite
+     * occupies in the three-column layout. The sprite starts below it instead,
+     * level with .info-group.top. */
+    .poke-info {
+        --poke-sprite-size: clamp(60px, calc(50vw - 264px), 150px);
+        --poke-sprite-top: 120px;
+    }
+
     .panel.third:not(.panel-mid):nth-child(3n) {
         width: calc(50vw - 10px);
         min-width: 280px;
@@ -1880,10 +1902,17 @@ table.field {
         font-size: 24px;
     }
 
+    /* Six tags (Learnset, Save, Add to Party, Remove, Met, Frags -- the third
+     * only appears here) need ~505px at this size, more than a half-viewport
+     * panel has, so the row used to shrink its items until "Add to Party" broke
+     * across three lines and spilled over the Type/Gender/Level rows. Smaller
+     * text, no breaking inside a tag, and a wrap between the left and right
+     * groups instead. layout-b.css reserves the room for the second line. */
     #player-tags div, #nav-tags div {
-        height: 40px;
-        font-size: 18px;
-        line-height: 40px;
+        height: 28px;
+        font-size: 14px;
+        line-height: 28px;
+        white-space: nowrap;
     }
 
     .info-group.top, .info-group.top.opp {
@@ -1971,13 +2000,14 @@ table.field {
     }
 
     .player .select2-chosen, .opposing .select2-chosen , .select2-container .select2-choice, .set-selector {
-        height: 80px;
-        line-height: 80px;
+        height: 40px;
+        line-height: 40px;
     }
 
     #player-tags {
-        top: 112px;
+        top: 72px;
         left: 10px;
+        flex-wrap: wrap;
     }
 
     #add-party-pok {
@@ -1985,7 +2015,7 @@ table.field {
     }
 
     #nav-tags {
-        top: 112px;
+        top: 72px;
     }
 
 /*    select {

@@ -577,7 +577,7 @@ function refresh_next_in() {
 		}
 
 		var pok = `<div class="trainer-pok-container no-switch-${noSwitch}">
-			<img class="trainer-pok right-side ${highlight} ${isFainted} ${isLead}" src="./img/${sprite_style}/${pok_name.replace("sn-s", "sion").replace(/-s$/, "")}.png" data-id="${dataID}">`
+			<img class="trainer-pok right-side ${sprite_style} ${highlight} ${isFainted} ${isLead}" src="./img/${sprite_style}/${pok_name.replace("sn-s", "sion").replace(/-s$/, "")}.png" data-id="${dataID}">`
 
 
 		var species = next_poks[i][0].split(" (")[0]

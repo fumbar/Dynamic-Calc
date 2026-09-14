@@ -4,3 +4,6 @@
 /tools
 /roms
 .DS_Store
+/.pokecalc.pid
+/.pokecalc.log
+/.pokecalc.log.err

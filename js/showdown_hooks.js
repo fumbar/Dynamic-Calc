@@ -3,7 +3,7 @@ function init_calc() {
   // reload shared controls now that everything else has loaded
   var head= document.getElementsByTagName('head')[0];
   var script= document.createElement('script');
-  script.src= './js/shared_controls.js?0b3ea005';
+  script.src= './js/shared_controls.js?0b3ea09e';
   head.appendChild(script);
 
   saveUploaded = false
@@ -614,7 +614,7 @@ function displayParty() {
 
 
             var pok = `<div class="trainer-pok-container">
-                <img class="trainer-pok left-side" src="./img/${sprite_style}/${sprite_name}.png" data-id="${data_id}">
+                <img class="trainer-pok left-side ${sprite_style}" src="./img/${sprite_style}/${sprite_name}.png" data-id="${data_id}">
                 <div class="bp-info">${abv(set_data['moves'][0].replace("Hidden Power", "HP"))}</div>
                 <div class="bp-info">${abv(set_data['moves'][1].replace("Hidden Power", "HP"))}</div>
                 <div class="bp-info">${abv(set_data['moves'][2].replace("Hidden Power", "HP"))}</div>
@@ -635,6 +635,7 @@ function toggleBoxSpriteStyle() {
 
     $('.trainer-pok').each(function() {
         $(this).removeClass(oldStyle)
+        $(this).addClass(sprite_style)
         var newURL = $(this).attr('src').replace(oldStyle, sprite_style)
         $(this).attr('src', newURL)
     })
@@ -1715,7 +1716,7 @@ $(document).ready(function() {
         set_data['moves'] = padArray(set_data['moves'], 4, "-")
 
         var pok = `<div class="trainer-pok-container">
-            <img class="trainer-pok left-side" src="./img/${sprite_style}/${sprite_name}.png" data-id="${data_id}">`
+            <img class="trainer-pok left-side ${sprite_style}" src="./img/${sprite_style}/${sprite_name}.png" data-id="${data_id}">`
 
         if (set_data['item']) {
             item_name = set_data['item'].toLowerCase().replace(" ", "_").replace("'", "") 

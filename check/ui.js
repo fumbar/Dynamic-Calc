@@ -138,6 +138,56 @@ async function main() {
         ['Krookodile', 41, 'Intimidate', '', 'Stomping Tantrum/Crunch/Stone Edge/Power-Up Punch'],
       ]));
 
+    console.log('\n# compact layout');
+    await session.send('Emulation.setDeviceMetricsOverride', {
+      width: 1200, height: 900, deviceScaleFactor: 1, mobile: false,
+    });
+    await open(UNBOUND);
+    check('party sprites form a contained 4 + 2 grid', await session.eval(
+      '(function () {' +
+      ' var party = document.querySelector(".player-party");' +
+      ' party.style.display = "flex";' +
+      ' party.innerHTML = Array(6).fill(0).map(function (_, i) {' +
+      '  return "<div class=\\"trainer-pok-container\\">" +' +
+      '   "<img class=\\"trainer-pok left-side pokesprite\\"" +' +
+      '   " src=\\"./img/pokesprite/abomasnow.png\\">" +' +
+      '   "<div class=\\"bp-info\\">Move " + i + "</div></div>";' +
+      ' }).join("");' +
+      ' var cards = Array.from(party.children).map(function (el) { return el.getBoundingClientRect(); });' +
+      ' var images = Array.from(party.querySelectorAll("img")).map(function (el) {' +
+      '  var r = el.getBoundingClientRect(), p = el.parentElement.getBoundingClientRect();' +
+      '  return r.width >= 94 && r.width <= 95 && r.height >= 71 && r.height <= 72 &&' +
+      '   r.left >= p.left && r.right <= p.right &&' +
+      '   getComputedStyle(el).imageRendering === "pixelated";' +
+      ' });' +
+      ' return cards.slice(0, 4).every(function (r) { return r.top === cards[0].top; }) &&' +
+      '  cards[4].top > cards[0].top && cards[5].top === cards[4].top && images.every(Boolean);' +
+      '})()'), true);
+    check('top move results use reference B density', await session.eval(
+      '(function () {' +
+      ' var group = document.querySelector(".move-result-group");' +
+      ' var subgroup = group.querySelector(".move-result-subgroup");' +
+      ' var button = subgroup.querySelector(".btn");' +
+      ' var rows = Array.from(subgroup.children);' +
+      ' return rows.every(function (row) { return row.getBoundingClientRect().height === 25; }) &&' +
+      '  parseFloat(getComputedStyle(subgroup).fontSize) < 14 &&' +
+      '  parseFloat(getComputedStyle(button).fontSize) < 14 &&' +
+      '  parseFloat(getComputedStyle(group).marginBottom) <= 101;' +
+      '})()'), true);
+    check('field is centered between the Pokemon panels', await session.eval(
+      '(function () {' +
+      ' var wrapper = document.querySelector(".panel-wrapper").getBoundingClientRect();' +
+      ' var mid = document.querySelector(".panel-mid").getBoundingClientRect();' +
+      ' var field = document.querySelector(".field-info").getBoundingClientRect();' +
+      ' var p1 = document.querySelector("#p1").getBoundingClientRect();' +
+      ' var p2 = document.querySelector("#p2").getBoundingClientRect();' +
+      ' var wrapperCenter = (wrapper.left + wrapper.right) / 2;' +
+      ' var fieldCenter = (field.left + field.right) / 2;' +
+      ' var leftGap = field.left - p1.right, rightGap = p2.left - field.right;' +
+      ' return Math.abs(wrapperCenter - fieldCenter) <= 0.5 &&' +
+      '  Math.abs(mid.width - field.width) <= 0.5 && Math.abs(leftGap - rightGap) <= 0.5;' +
+      '})()'), true);
+
     console.log('\n# tier control and box');
     await session.eval(
       'localStorage.setItem("customsets", JSON.stringify(' +
