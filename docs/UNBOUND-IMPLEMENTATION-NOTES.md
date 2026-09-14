@@ -53,9 +53,17 @@ rule is scoped by the style class each tile carries. The panel sprite (`.poke-sp
 left smoothed, by the owner's preference. The held-item icon takes `pointer-events: none`
 because the click handler sits on the sprite underneath it.
 
-**Coverage limit:** the geometry check measures the panel sprite and `pokesprite` tile
-styles, but does not exercise a `newhd` box tile or compare rendered images. The original
-blanket pixelated rule was caught by the owner before the geometry check was added.
+**The four Unbound field effects** are a two-column grid. They were four `btn-xxxwide`
+labels in one wrapping row, which went ragged because only "Big Mo's Weight Room" runs to
+two lines; constraining the row to two produced a 2x2, but inline boxes align to each other
+by baseline, so the two-line button sat its row six pixels out of true. A grid gives four
+cells of one size whatever the labels do. Corner radii follow the block's four corners
+there, since `btn-left` and `btn-right` round the ends of a row.
+
+**Coverage limit:** the geometry check measures the panel sprite, the `pokesprite` tile
+styles and the field-effect 2x2, but does not exercise a `newhd` box tile or compare
+rendered images. The original blanket pixelated rule was caught by the owner before the
+geometry check was added.
 
 **Panel sprite sizing (2026-09-13).** `.poke-sprite` is an absolute overlay in the panel's
 top-right corner, and its size and offset are now two custom properties on `.poke-info`,

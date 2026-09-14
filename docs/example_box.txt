@@ -11,18 +11,18 @@ IVs: 30 HP / 27 Atk / 27 Def / 26 SpA / 31 SpD / 31 Spe
 - Aqua Jet
 - Defog
 
-Sneasel (Sneasel) (F) @ Never-Melt Ice
-Ability: Inner Focus
-Level: 35
+Ampharos (Ampharos) (F)
+Ability: Static
+Level: 36
 Shiny: No
-Happiness: 254
-EVs: 6 HP / 252 Atk / 7 Def / 3 SpA / 6 SpD / 236 Spe
-Lonely Nature
-IVs: 22 HP / 31 Atk / 3 Def / 6 SpA / 31 SpD / 31 Spe
-- Avalanche
-- Feint Attack
-- Ice Shard
-- Double Hit
+Happiness: 219
+EVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+Modest Nature
+IVs: 31 HP / 21 Atk / 27 Def / 28 SpA / 29 SpD / 29 Spe
+- Charge Beam
+- Thunder Wave
+- Power Gem
+- Confuse Ray
 
 Excadrill (Excadrill) (F)
 Ability: Sand Rush
@@ -63,18 +63,18 @@ IVs: 26 HP / 20 Atk / 12 Def / 8 SpA / 30 SpD / 17 Spe
 - Bite
 - Thunder Wave
 
-Pyroar (Pyroar) (F)
-Ability: Royal Roar
-Level: 36
+Trevenant (Trevenant) (M) @ Sitrus Berry
+Ability: Harvest
+Level: 40
 Shiny: No
 Happiness: 255
-EVs: 6 HP / 0 Atk / 0 Def / 252 SpA / 0 SpD / 252 Spe
-Rash Nature
-IVs: 31 HP / 16 Atk / 31 Def / 24 SpA / 8 SpD / 31 Spe
-- Incinerate
-- Thief
-- Snarl
-- Sunny Day
+EVs: 252 HP / 0 Atk / 252 Def / 0 SpA / 6 SpD / 0 Spe
+Impish Nature
+IVs: 31 HP / 28 Atk / 25 Def / 27 SpA / 31 SpD / 17 Spe
+- Phantom Force
+- Will-O-Wisp
+- Horn Leech
+- Leech Seed
 
 Salazzle (Salazzle) (F) @ Poison Barb
 Ability: Corrosion
@@ -89,18 +89,18 @@ IVs: 28 HP / 5 Atk / 30 Def / 26 SpA / 20 SpD / 29 Spe
 - Nasty Plot
 - Venoshock
 
-Seel (Seel) (F)
-Ability: Ice Body
-Level: 24
+Roly-Poly (Electrode) @ Focus Band
+Ability: Aftermath
+Level: 40
 Shiny: No
-Happiness: 50
-EVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
-Quirky Nature
-IVs: 2 HP / 24 Atk / 8 Def / 4 SpA / 20 SpD / 25 Spe
-- Encore
-- Aqua Jet
-- Aqua Ring
-- Icy Wind
+Happiness: 255
+EVs: 6 HP / 0 Atk / 0 Def / 252 SpA / 0 SpD / 252 Spe
+Modest Nature
+IVs: 26 HP / 27 Atk / 30 Def / 31 SpA / 27 SpD / 31 Spe
+- Discharge
+- Light Screen
+- Charge Beam
+- Thunder Wave
 
 Electrike (Electrike) (M)
 Ability: Lightning Rod
@@ -140,45 +140,6 @@ IVs: 21 HP / 30 Atk / 30 Def / 27 SpA / 10 SpD / 15 Spe
 - Poison Powder
 - Silver Wind
 
-Ampharos (Ampharos) (F)
-Ability: Static
-Level: 36
-Shiny: No
-Happiness: 193
-EVs: 7 HP / 23 Atk / 10 Def / 6 SpA / 2 SpD / 36 Spe
-Relaxed Nature
-IVs: 29 HP / 22 Atk / 11 Def / 30 SpA / 7 SpD / 7 Spe
-- Charge
-- Confuse Ray
-- Cotton Spore
-- Power Gem
-
-Comfey (Comfey) (M) @ Miracle Seed
-Ability: Triage
-Level: 40
-Shiny: No
-Happiness: 255
-EVs: 252 HP / 0 Atk / 252 Def / 6 SpA / 0 SpD / 0 Spe
-Bold Nature
-IVs: 30 HP / 19 Atk / 28 Def / 30 SpA / 28 SpD / 31 Spe
-- Draining Kiss
-- Calm Mind
-- Magical Leaf
-- Leech Seed
-
-Serperior (Serperior) (M)
-Ability: Overgrow
-Level: 36
-Shiny: No
-Happiness: 255
-EVs: 0 HP / 0 Atk / 0 Def / 252 SpA / 0 SpD / 252 Spe
-Timid Nature
-IVs: 31 HP / 26 Atk / 31 Def / 31 SpA / 21 SpD / 31 Spe
-- Leaf Tornado
-- Leech Seed
-- Mega Drain
-- Growth
-
 Crobat (Crobat) (F)
 Ability: Inner Focus
 Level: 40
@@ -191,19 +152,6 @@ IVs: 27 HP / 31 Atk / 29 Def / 7 SpA / 24 SpD / 31 Spe
 - Poison Fang
 - Wing Attack
 - Bite
-
-Trevenant (Trevenant) (M) @ Sitrus Berry
-Ability: Harvest
-Level: 40
-Shiny: No
-Happiness: 255
-EVs: 252 HP / 0 Atk / 252 Def / 0 SpA / 6 SpD / 0 Spe
-Impish Nature
-IVs: 31 HP / 28 Atk / 25 Def / 27 SpA / 31 SpD / 17 Spe
-- Phantom Force
-- Will-O-Wisp
-- Horn Leech
-- Leech Seed
 
 Metang (Metang) @ Eviolite
 Ability: Clear Body
@@ -218,15 +166,41 @@ IVs: 31 HP / 31 Atk / 14 Def / 10 SpA / 20 SpD / 26 Spe
 - Bullet Punch
 - Bulldoze
 
-Roly-Poly (Electrode) @ Focus Band
-Ability: Aftermath
+Serperior (Serperior) (M)
+Ability: Overgrow
+Level: 36
+Shiny: No
+Happiness: 255
+EVs: 0 HP / 0 Atk / 0 Def / 252 SpA / 0 SpD / 252 Spe
+Timid Nature
+IVs: 31 HP / 26 Atk / 31 Def / 31 SpA / 21 SpD / 31 Spe
+- Leaf Tornado
+- Leech Seed
+- Mega Drain
+- Growth
+
+Weavile (Weavile) (M)
+Ability: Pressure
+Level: 40
+Shiny: No
+Happiness: 227
+EVs: 0 HP / 0 Atk / 0 Def / 0 SpA / 0 SpD / 0 Spe
+Jolly Nature
+IVs: 30 HP / 31 Atk / 27 Def / 20 SpA / 31 SpD / 31 Spe
+- Assurance
+- Ice Shard
+- Avalanche
+- Nasty Plot
+
+Comfey (Comfey) (M) @ Miracle Seed
+Ability: Triage
 Level: 40
 Shiny: No
 Happiness: 255
-EVs: 6 HP / 0 Atk / 0 Def / 252 SpA / 0 SpD / 252 Spe
-Modest Nature
-IVs: 26 HP / 27 Atk / 30 Def / 31 SpA / 27 SpD / 31 Spe
-- Discharge
-- Light Screen
-- Charge Beam
-- Thunder Wave
+EVs: 252 HP / 0 Atk / 252 Def / 6 SpA / 0 SpD / 0 Spe
+Bold Nature
+IVs: 30 HP / 19 Atk / 28 Def / 30 SpA / 28 SpD / 31 Spe
+- Draining Kiss
+- Calm Mind
+- Magical Leaf
+- Leech Seed

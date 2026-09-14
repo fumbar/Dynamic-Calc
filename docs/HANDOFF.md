@@ -1,6 +1,7 @@
 # Dynamic Calc handoff
 
-Updated 2026-09-13 after the panel sprite and two-column layout fixes and a repository cleanup.
+Updated 2026-09-13 after a run of UI work: the panel sprite and two-column layout, held
+items on box tiles, the rail's move scoring, and the field-effect block.
 This is the current entry point for an agent arriving without conversation history.
 
 ## Current state and scope
@@ -15,13 +16,15 @@ Difficult, 240 / 380 on Expert, and 265 / 415 on Insane, before imported box ent
 Working directory: `D:/antigrav-projs/dynamic-calc-merge-opus`; branch: `master`,
 tracking `origin/master` at `https://github.com/fumbar/Dynamic-Calc.git`; integration
 baseline: `1b8da408`. The `dynamic-calc-merge-opus` branch is an ancestor of `master` and
-no longer moves; work lands on `master` and is pushed from there. The most recent code
-change is `100af961`, the panel sprite and two-column layout work; `d61b3032` then removed
-two orphaned pages (`mastersheet.html`, which loaded a `mastersheet_files/` directory the
-repository does not contain, and `ss.html`, an unreferenced copy of the Sterling Silver
-sheet) and two stray screenshots. Nothing is pending. Run `git status --short` and
-`git log -6 --oneline` when you arrive; preserve pending work. Do not rebase onto upstream
-(ADR 0001).
+no longer moves; work lands on `master` and is pushed from there, and nothing is pending.
+The recent code changes, oldest first: `100af961` sized the panel sprite and squared the
+two-column layout; `d61b3032` removed two orphaned pages (`mastersheet.html`, which loaded
+a `mastersheet_files/` directory the repository does not contain, and `ss.html`, an
+unreferenced copy of the Sterling Silver sheet) and two stray screenshots; `f7551c14` put
+held items on box tiles and fixed the Zygarde sprite URL; `97041494` widened the rail's
+move scoring to every title; `e5077e2b` made the Unbound field effects an even 2x2. Run
+`git status --short` and `git log -6 --oneline` when you arrive; preserve pending work. Do
+not rebase onto upstream (ADR 0001).
 
 Read next as needed:
 
@@ -77,9 +80,17 @@ the verification route for this fork.
   stay behind the Cascade White 2 gate, the first two because they are wrong as written
   and the third because the weather read there takes the first of two checked inputs.
   Unbound switch-in ordering itself is still unverified against the game.
+- Box and party tiles show the held item over the sprite. Sprite filenames are derived
+  from the species name, so they are percent-encoded and drop `%` to match the assets;
+  item filenames replace every space.
 - Text import is the Unbound workflow. `docs/example_box.txt` is the owner's real Cloud
-  export: 18 Pokémon, 17 species, nicknames, and two Pyroar. Duplicate species use numbered
-  `My Box` slots. Existing save readers for other titles remain; Unbound's save control is hidden.
+  export, re-exported on 2026-09-13: 16 Pokémon, 16 species, and nicknames, one of which
+  (`Zygarde (Zygarde-10%)`) is itself a species name. Duplicate species use numbered
+  `My Box` slots; the box holds none any more, so `check/ui.js` and `check/review.js`
+  append a second Pyroar to the same paste to keep that case covered. A species imported
+  in a later paste replaces its existing entry rather than taking a new slot. Expect the
+  file to change again when the owner re-exports, and the counts in those checks with it.
+  Existing save readers for other titles remain; Unbound's save control is hidden.
 
 ## Implementation map
 
@@ -112,7 +123,7 @@ Run relevant checks, then stop unless a failure or concrete concern warrants mor
 | `node check/ui.js` | Browser: tiers, restoration, actual local dropdown navigation, box retention, data seams, effects, switch-in move scoring, Cloud import |
 | `node check/review.js` | Browser and donor B: duplicate box actions, Camomons, weather, Liquid Voice |
 | `node check/mechanics.js` | Node and donor B: discriminating cases for ported effects |
-| `node check/geometry.js` | Browser and donor B: computed sizes/styles at 1276px and 1126px |
+| `node check/geometry.js` | Browser and donor B: computed sizes/styles at 1276px and 1126px, including the field-effect 2x2 |
 | `node check/audit-probe.js` | Diagnostic output for five titles; per-title errors are printed, not asserted |
 | `node check/agreement.js <tier>` | Optional broad donor comparison; browser and donor B |
 | `node check/rom-data.js` | Optional species/move comparison; requires the pinned ROM |
@@ -120,14 +131,26 @@ Run relevant checks, then stop unless a failure or concrete concern warrants mor
 `check/browser.js`, `check/harness.js`, `check/calc-case.js` and `check/data-load.js` are
 shared helpers the entry points above require, not checks to run on their own.
 
-Latest change set, CSS only: the panel sprite is sized from `--poke-sprite-size` and
-`--poke-sprite-top` on `.poke-info` rather than a fixed box per breakpoint, and the
-`width <= 1180px` block was resized so `#player-tags` and the set selector stop colliding
-with the fields. `node check/ui.js` and `node check/geometry.js` passed afterwards. Freedom
-from overlap was measured directly in headless Chrome from 700px to 1920px; those
-measurements were one-off probes, not recorded checks, so the geometry check still covers
-only the styles listed below. No engine or ROM-data change occurred, so broad sweeps and ROM
-analysis were not repeated.
+Latest run of work, none of it touching the engine or the ROM data, so broad sweeps and ROM
+analysis were not repeated:
+
+- The panel sprite is sized from `--poke-sprite-size` and `--poke-sprite-top` on
+  `.poke-info` rather than a fixed box per breakpoint, and the `width <= 1180px` block was
+  resized so `#player-tags` and the set selector stop colliding with the fields. Freedom
+  from overlap was measured in headless Chrome from 700px to 1920px; those measurements
+  were one-off probes, not recorded checks.
+- Sprite filenames are percent-encoded and `%`-free, box tiles carry held items, and item
+  filenames no longer stop at the first space. Verified against the example box in both
+  sprite styles, including sort, click, party add and remove, and the search filter.
+- The rail's move scoring gained the mechanics every title shares. Four cases in
+  `check/ui.js` pin it to real Unbound sets.
+- The field effects are a two-column grid. Three cases in `check/geometry.js` pin the 2x2.
+- `docs/example_box.txt` was re-exported by the owner mid-session, dropping from 18 entries
+  to 16 and losing the duplicate species three checks relied on. The checks follow the new
+  box; see the text import note above.
+
+`node check/ui.js`, `node check/geometry.js` and `node check/run.js` pass; `check/review.js`
+passed on the scoring change.
 
 The preceding navigation review: baseline and expanded UI checks passed, and the audit probe
 loaded Unbound, Renegade Platinum, Blaze Black, Inclement Emerald, and Fire Red without

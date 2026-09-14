@@ -30,7 +30,14 @@ async function main() {
     await session.waitFor('$("#p1 .move1 .move-selector option").length > 100');
     assert.equal(await session.eval('LIQUID_VOICE_NO_BOOST'), true);
     const team = fs.readFileSync(path.join(__dirname, '../docs/example_box.txt'), 'utf8');
-    await session.eval('addSets(' + JSON.stringify(team) + ', "Box")');
+    // The duplicate box actions below need a species held twice, which the owner's box
+    // no longer is, so a second Pyroar joins the same paste. The export names the
+    // species in brackets after a nickname, and the file ends without a trailing
+    // newline, hence the separator. Its first move carries the assertion below.
+    const secondPyroar = ['', '', 'Simba (Pyroar) (F) @ Charcoal', 'Ability: Unnerve',
+      'Level: 44', 'Modest Nature', '- Flamethrower', '- Hyper Voice',
+      '', ''].join('\n');
+    await session.eval('addSets(' + JSON.stringify(team + secondPyroar) + ', "Box")');
     const evaluate = async fn => session.eval('(' + fn.toString() + ')()');
     await evaluate(() => {
       $('#p1 input.set-selector').select2('data', { id: 'Pyroar (My Box)', text: 'Pyroar (My Box)' }).change();
@@ -52,7 +59,8 @@ async function main() {
       const saved = JSON.parse(localStorage.customsets).Pyroar;
       return [saved['My Box'].level, !!saved['My Box 2'], !!setdex.Pyroar['My Box 2'],
         $('.player-party [data-id="Pyroar (My Box 2)"]').length];
-    }), [36, false, false, 0]);
+      // the level of the Pyroar the owner's box actually holds
+    }), [40, false, false, 0]);
     await session.eval('addSets(' + JSON.stringify(team) + ', "Box")');
     assert.deepEqual(await evaluate(() => {
       $('#clearSets').click();

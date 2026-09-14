@@ -451,8 +451,8 @@ async function main() {
 
     console.log('\n# text import');
     // A real Unbound Cloud box export from the owner's playthrough
-    // (docs/example_box.txt): 18 Pokemon, 17 species, nicknames, and one species
-    // that appears twice.
+    // (docs/example_box.txt): 16 Pokemon, 16 species, and nicknames, one of which is
+    // itself a species name.
     const TEAM = require('fs').readFileSync(
       require('path').join(__dirname, '..', 'docs', 'example_box.txt'), 'utf8');
     const boxDump = '(function () {' +
@@ -466,7 +466,7 @@ async function main() {
     await open(UNBOUND);
     await session.eval('addSets(' + JSON.stringify(TEAM) + ', "Box")');
     const imported = JSON.parse(await session.eval(boxDump));
-    check('every Pokemon in the box is imported', imported.length, 18);
+    check('every Pokemon in the box is imported', imported.length, 16);
     check('imported species are all selectable', await session.eval(
       '(function () {' +
       '  var d = JSON.parse(localStorage.customsets || "{}");' +
@@ -478,13 +478,26 @@ async function main() {
       '  var d = JSON.parse(localStorage.customsets || "{}");' +
       '  return JSON.stringify([!!d["Zygarde-10%"], !!d["Zygarde"]]);' +
       '})()'), '[true,false]');
-    // Two Pyroar used to collapse into one, the second overwriting the first.
-    check('a species held twice keeps both entries',
-      imported.filter(r => r.indexOf('Pyroar|') === 0).sort(),
-      ['Pyroar|My Box 2|40', 'Pyroar|My Box|36']);
     await session.eval('addSets(' + JSON.stringify(TEAM) + ', "Box")');
     check('an identical re-import does not accumulate entries',
-      JSON.parse(await session.eval(boxDump)).length, 18);
+      JSON.parse(await session.eval(boxDump)).length, 16);
+    // Two of a species in one export used to collapse into one entry, the second
+    // overwriting the first. The box holds no species twice any more, so the case is
+    // built by appending a second Pyroar to the same paste. (Importing it separately
+    // is a different path: a later import of a species already in the box replaces
+    // that entry rather than taking a new slot.)
+    // The export names the species in brackets after a nickname; a bare species line
+    // is read as part of the entry above it. The file ends without a trailing newline,
+    // hence the separator.
+    const SECOND_PYROAR = ['', '', 'Simba (Pyroar) (F) @ Charcoal', 'Ability: Unnerve',
+      'Level: 44', 'Modest Nature', '- Flamethrower', '- Hyper Voice',
+      '', ''].join('\n');
+    await session.eval('localStorage.removeItem("customsets")');
+    await open(UNBOUND);
+    await session.eval('addSets(' + JSON.stringify(TEAM + SECOND_PYROAR) + ', "Box")');
+    check('a species held twice keeps both entries',
+      JSON.parse(await session.eval(boxDump)).filter(r => r.indexOf('Pyroar|') === 0).sort(),
+      ['Pyroar|My Box 2|44', 'Pyroar|My Box|40']);
     check('an imported Pokemon calculates off Unbound base stats', await session.eval(
       '(function () {' +
       '  var gen = calc.Generations.get(8);' +
