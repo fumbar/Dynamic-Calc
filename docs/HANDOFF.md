@@ -1,6 +1,6 @@
 # Dynamic Calc handoff
 
-Updated 2026-09-13 after reviewing the navigation and selection-restoration fixes.
+Updated 2026-09-13 after the panel sprite and two-column layout fixes and a repository cleanup.
 This is the current entry point for an agent arriving without conversation history.
 
 ## Current state and scope
@@ -12,13 +12,16 @@ Unbound switch-in prediction and direct Unbound save import remain deferred.
 Trainer collections after documented exclusions contain 223 species / 355 sets on
 Difficult, 240 / 380 on Expert, and 265 / 415 on Insane, before imported box entries.
 
-Working directory: `D:/antigrav-projs/dynamic-calc-merge-opus`; branch:
-`dynamic-calc-merge-opus`; integration baseline: `1b8da408`. At this review's start,
-HEAD was `d7733478`, with navigation/restoration fixes in the working tree. Earlier
-mechanics, import fixes, and geometry work were already committed. This review adds
-visible external-option labels, real dropdown-navigation checks, and refreshed docs.
-It makes no commit or push. Run `git status --short` and `git log -6 --oneline` when
-you arrive; preserve pending work. Do not rebase onto upstream (ADR 0001).
+Working directory: `D:/antigrav-projs/dynamic-calc-merge-opus`; branch: `master`,
+tracking `origin/master` at `https://github.com/fumbar/Dynamic-Calc.git`; integration
+baseline: `1b8da408`. The `dynamic-calc-merge-opus` branch is an ancestor of `master` and
+no longer moves; work lands on `master` and is pushed from there. The most recent code
+change is `100af961`, the panel sprite and two-column layout work; `d61b3032` then removed
+two orphaned pages (`mastersheet.html`, which loaded a `mastersheet_files/` directory the
+repository does not contain, and `ss.html`, an unreferenced copy of the Sterling Silver
+sheet) and two stray screenshots. Nothing is pending. Run `git status --short` and
+`git log -6 --oneline` when you arrive; preserve pending work. Do not rebase onto upstream
+(ADR 0001).
 
 Read next as needed:
 
@@ -36,10 +39,11 @@ and [bounded ROM verification](adr/0004-rom-checked-data-layer.md).
 
 ## Run it
 
-Serve the repository root over HTTP using an available static server, for example
-`python -m http.server 8000` with a working Python installation. The Windows `python`
-alias may not resolve; use an existing alternative if necessary. No application build
-or dependency install is required. Do not open via `file://`.
+Serve the repository root over HTTP. `node serve.js 8000` is in the repository and needs
+nothing installed; `pokecalc.ps1` / `pokecalc.bat` wrap it with start/stop/status and pick
+the next free port. Any static server works, for example `python -m http.server 8000`,
+though the Windows `python` alias may not resolve. No application build or dependency
+install is required. Do not open via `file://`.
 
 ```text
 http://localhost:8000/index.html?data=unbound&gen=8&dmgGen=8&types=6
@@ -104,11 +108,21 @@ Run relevant checks, then stop unless a failure or concrete concern warrants mor
 | `node check/agreement.js <tier>` | Optional broad donor comparison; browser and donor B |
 | `node check/rom-data.js` | Optional species/move comparison; requires the pinned ROM |
 
-Latest navigation review: baseline and expanded UI checks passed. The audit probe loaded
-Unbound, Renegade Platinum, Blaze Black, Inclement Emerald, and Fire Red without unexpected
-logged page errors. The preceding audit also passed mechanics and review suites. No engine,
-ROM-data, or CSS changes occurred in this review, so broad sweeps, ROM analysis, and geometry
-checks were not repeated. `git diff --check` passed.
+`check/browser.js`, `check/harness.js`, `check/calc-case.js` and `check/data-load.js` are
+shared helpers the entry points above require, not checks to run on their own.
+
+Latest change set, CSS only: the panel sprite is sized from `--poke-sprite-size` and
+`--poke-sprite-top` on `.poke-info` rather than a fixed box per breakpoint, and the
+`width <= 1180px` block was resized so `#player-tags` and the set selector stop colliding
+with the fields. `node check/ui.js` and `node check/geometry.js` passed afterwards. Freedom
+from overlap was measured directly in headless Chrome from 700px to 1920px; those
+measurements were one-off probes, not recorded checks, so the geometry check still covers
+only the styles listed below. No engine or ROM-data change occurred, so broad sweeps and ROM
+analysis were not repeated.
+
+The preceding navigation review: baseline and expanded UI checks passed, and the audit probe
+loaded Unbound, Renegade Platinum, Blaze Black, Inclement Emerald, and Fire Red without
+unexpected logged page errors. The audit before it also passed mechanics and review suites.
 
 Earlier dated stdout in `check/results/` records geometry and donor agreement: 99.30%
 Difficult, 99.61% Expert, 99.64% Insane. Those runs are historical evidence, not fresh

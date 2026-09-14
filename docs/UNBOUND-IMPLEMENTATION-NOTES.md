@@ -34,10 +34,10 @@ shrank. Check these first if you change the type scale again:
 
 | constant | what it did |
 |---|---|
-| `.poke-sprite` `calc(100% - 430px)` | goes negative at 30em, so the sprites vanish |
+| `.poke-sprite` `calc(100% - 430px)` | went negative at 30em, so the sprites vanished; replaced, see below |
 | `.right-table` `height: 205px` | 62px of dead space under a 143px table, dropping Pokemon 2 out of line with Pokemon 1 |
 | `.btn-xxxwide` `height/line-height: 30px` | donor B sizes that class by width alone |
-| `#player-tags` `top: 71px` | collides with the Type row once the rows above it shrink |
+| `#player-tags` `top` | an absolute offset tied to the height of the set selector above it; it lands on the Type row whenever that height changes |
 
 The `width <= 1180px` reflow (`.panel-wrapper` wraps and `.panel-mid` takes `order: 2`, so
 Field drops below the pair) had never worked: the two Pokemon columns are sized
@@ -56,6 +56,25 @@ because the click handler sits on the sprite underneath it.
 **Coverage limit:** the geometry check measures the panel sprite and `pokesprite` tile
 styles, but does not exercise a `newhd` box tile or compare rendered images. The original
 blanket pixelated rule was caught by the owner before the geometry check was added.
+
+**Panel sprite sizing (2026-09-13).** `.poke-sprite` is an absolute overlay in the panel's
+top-right corner, and its size and offset are now two custom properties on `.poke-info`,
+`--poke-sprite-size` and `--poke-sprite-top`, so everything that has to stay clear of it
+derives from the same numbers: `.info-group.top` takes `min-height: calc(size - 13px)` to
+keep the stat table below the sprite instead of behind it, and the frag overlays offset from
+its bottom edge. Three columns hold 150px; under `width <= 1180px` the panels are half the
+viewport rather than a fixed 400px, so the size becomes `clamp(60px, calc(50vw - 264px),
+150px)` -- the field rows beside the sprite need about 241px -- and the top moves down to
+clear `#player-tags`.
+
+That narrow block also had to shrink: its six tags (`Add to Party` only appears there)
+needed about 505px against a ~427px panel, so the flex row squeezed its items until
+`Add to Party` broke across three lines and spilled over the Type/Gender/Level rows. The
+tags are 14px in 28px rows with `white-space: nowrap`, the row may `flex-wrap` its right
+group onto a second line, and the set selector is 40px rather than 80px. `.info-group.top`
+reserves that second line through `layout-b.css`, which owns the clearance because it loads
+last. Moving the selector height moves `#player-tags`, `#nav-tags` and `--poke-sprite-top`
+with it; they are pinned offsets, not flow.
 
 ## Bugs found and fixed on the way
 

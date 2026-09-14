@@ -1,8 +1,10 @@
 # Merge work lives on a long-lived branch; we stop rebasing onto upstream
 
-Current naming (2026-09-13): the owner named the working branch `dynamic-calc-merge-opus`.
-`unbound-merge` below is its planning name. The no-rebase decision remains in force;
-see [the handoff](../HANDOFF.md) for current checkout state.
+Current naming (2026-09-13): `unbound-merge` below is the planning name. The owner's
+working branch was `dynamic-calc-merge-opus`; it is now an ancestor of `master`, and work
+lands on `master`, which pushes to `origin`. No `upstream` remote is configured at present,
+so cherry-picking a specific upstream fix means adding one first. The no-rebase decision
+remains in force; see [the handoff](../HANDOFF.md) for current checkout state.
 
 The Unbound merge adds several thousand ported lines to a fork that already carries local
 patches, which makes whole-tree rebases onto `hzla/Dynamic-Calc` progressively more painful

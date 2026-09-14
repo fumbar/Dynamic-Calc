@@ -5,7 +5,9 @@ A showdown calculator fork with dynamic data source loading and expanded feature
 
 ## Run this fork
 
-Serve the repository root over HTTP with an available static server, such as
+Serve the repository root over HTTP. The repository includes `serve.js`, so
+`node serve.js 8000` works with nothing installed, and `pokecalc.ps1` / `pokecalc.bat` wrap
+it with start/stop/status on Windows. Any other static server does too, such as
 `python -m http.server 8000`. No application build or `npm install` is required.
 Open `http://localhost:8000/index.html?data=unbound&gen=8&dmgGen=8&types=6`.
 
